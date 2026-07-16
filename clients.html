@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Clients — 10X CRM</title>
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar-root"></aside>
+
+    <main class="main">
+      <div class="page-head">
+        <div>
+          <h1 data-i18n="clients.title">Clients</h1>
+          <p data-i18n="clients.subtitle">Every lead and deal in one ledger.</p>
+        </div>
+        <div class="page-head-actions">
+          <button class="btn btn-ghost" id="export-csv-btn" type="button" style="width:auto;" data-i18n="btn.exportCsv">Export CSV</button>
+          <button class="btn btn-primary" id="open-add-client" type="button" style="width:auto;" data-i18n="btn.addClient">+ Add Client</button>
+        </div>
+      </div>
+
+      <div class="toolbar">
+        <div class="search-box">
+          <input type="text" id="search-input" placeholder="Search by name or company..." data-i18n-placeholder="search.placeholder">
+        </div>
+        <div class="chip-row" id="filter-chips">
+          <button class="chip active" data-status="All" type="button" data-i18n="chip.all">All</button>
+          <button class="chip" data-status="Lead" type="button" data-i18n="status.lead">Lead</button>
+          <button class="chip" data-status="Contacted" type="button" data-i18n="status.contacted">Contacted</button>
+          <button class="chip" data-status="Won" type="button" data-i18n="status.won">Won</button>
+          <button class="chip" data-status="Lost" type="button" data-i18n="status.lost">Lost</button>
+        </div>
+        <select class="sort-select" id="sort-select">
+          <option value="newest" data-i18n="sort.newest">Newest first</option>
+          <option value="name" data-i18n="sort.name">Name A &rarr; Z</option>
+          <option value="value" data-i18n="sort.value">Deal value: high &rarr; low</option>
+        </select>
+        <div class="view-toggle" id="view-toggle">
+          <button class="view-toggle-btn active" data-view="grid" type="button" data-i18n="view.grid">Grid</button>
+          <button class="view-toggle-btn" data-view="kanban" type="button" data-i18n="view.kanban">Kanban</button>
+        </div>
+      </div>
+
+      <p class="shortcuts-hint" data-i18n="shortcuts.hint">/ search · N new client · E export · Esc close</p>
+
+      <div id="clients-area">
+        <div class="state-msg" data-i18n="state.loadingClients">Loading clients...</div>
+      </div>
+      <div class="kanban-board hidden" id="kanban-board"></div>
+    </main>
+  </div>
+
+  <!-- Add Client modal (P4.4) -->
+  <div class="modal-backdrop" id="add-modal-backdrop">
+    <div class="modal">
+      <div class="modal-head">
+        <h3 data-i18n="modal.addClient.title">Add Client</h3>
+        <button class="modal-close" id="add-modal-close" type="button">&times;</button>
+      </div>
+      <form id="add-client-form" novalidate>
+        <div class="field" id="name-field">
+          <label for="name" data-i18n="field.name">Name</label>
+          <input type="text" id="name" name="name">
+          <div class="field-error" id="name-error"></div>
+        </div>
+        <div class="field" id="clientEmail-field">
+          <label for="clientEmail" data-i18n="field.clientEmail">Email</label>
+          <input type="text" id="clientEmail" name="clientEmail">
+          <div class="field-error" id="clientEmail-error"></div>
+        </div>
+        <div class="field" id="phone-field">
+          <label for="phone" data-i18n="field.phone">Phone</label>
+          <input type="text" id="phone" name="phone">
+          <div class="field-error" id="phone-error"></div>
+        </div>
+        <div class="field" id="company-field">
+          <label for="company" data-i18n="field.company">Company</label>
+          <input type="text" id="company" name="company">
+          <div class="field-error" id="company-error"></div>
+        </div>
+        <div class="field" id="dealValue-field">
+          <label for="dealValue" data-i18n="field.dealValue">Deal Value</label>
+          <input type="text" id="dealValue" name="dealValue" placeholder="e.g. 5000" data-i18n-placeholder="field.dealValuePlaceholder">
+          <div class="field-error" id="dealValue-error"></div>
+        </div>
+        <div class="field" id="status-field">
+          <label for="status" data-i18n="field.status">Status</label>
+          <select id="status" name="status">
+            <option value="Lead" data-i18n="status.lead">Lead</option>
+            <option value="Contacted" data-i18n="status.contacted">Contacted</option>
+            <option value="Won" data-i18n="status.won">Won</option>
+            <option value="Lost" data-i18n="status.lost">Lost</option>
+          </select>
+        </div>
+        <button type="submit" class="btn btn-primary" data-i18n="btn.addClientSubmit">Add Client</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Client details modal (P4.8) -->
+  <div class="modal-backdrop" id="detail-modal-backdrop">
+    <div class="modal" id="detail-modal-content"></div>
+  </div>
+
+  <script src="js/i18n.js"></script>
+  <script src="js/guard.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/clients.js"></script>
+</body>
+</html>

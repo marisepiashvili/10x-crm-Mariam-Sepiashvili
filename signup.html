@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Create your account — 10X CRM</title>
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <div class="switch-row auth-toggle-row">
+    <button class="switch-toggle" data-theme-toggle type="button" role="switch">
+      <span class="switch-track">
+        <span class="switch-icon switch-icon-left"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg></span>
+        <span class="switch-icon switch-icon-right"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></span>
+        <span class="switch-knob"></span>
+      </span>
+    </button>
+    <button class="switch-toggle" data-lang-toggle type="button" role="switch">
+      <span class="switch-track">
+        <span class="switch-icon switch-icon-left switch-text">EN</span>
+        <span class="switch-icon switch-icon-right switch-text">ქა</span>
+        <span class="switch-knob"></span>
+      </span>
+    </button>
+  </div>
+
+  <div class="auth-shell">
+    <div style="position:relative; z-index:1; width:100%; max-width:420px;">
+      <div class="auth-mark"><span class="stamp">10X</span> 10X CRM</div>
+
+      <div class="auth-card">
+        <h1 data-i18n="signup.title">Create your account</h1>
+        <p class="auth-sub" data-i18n="signup.subtitle">Set up your pipeline in under a minute.</p>
+
+        <form id="signup-form" novalidate>
+          <div class="field" id="fullName-field">
+            <label for="fullName" data-i18n="field.fullName">Full Name</label>
+            <input type="text" id="fullName" name="fullName" autocomplete="name">
+            <div class="field-error" id="fullName-error"></div>
+          </div>
+
+          <div class="field" id="email-field">
+            <label for="email" data-i18n="field.email">Email</label>
+            <input type="text" id="email" name="email" autocomplete="email">
+            <div class="field-error" id="email-error"></div>
+          </div>
+
+          <div class="field" id="company-field">
+            <label for="company" data-i18n="field.company">Company</label>
+            <input type="text" id="company" name="company" placeholder="Company (optional)" data-i18n-placeholder="field.companyPlaceholder" autocomplete="organization">
+            <div class="field-error" id="company-error"></div>
+          </div>
+
+          <div class="field" id="password-field">
+            <label for="password" data-i18n="field.password">Password</label>
+            <input type="password" id="password" name="password" autocomplete="new-password">
+            <div class="field-error" id="password-error"></div>
+          </div>
+
+          <div class="field" id="confirmPassword-field">
+            <label for="confirmPassword" data-i18n="field.confirmPassword">Confirm Password</label>
+            <input type="password" id="confirmPassword" name="confirmPassword" autocomplete="new-password">
+            <div class="field-error" id="confirmPassword-error"></div>
+          </div>
+
+          <button type="submit" class="btn btn-primary" data-i18n="signup.submit">Create Account</button>
+        </form>
+
+        <p class="auth-switch"><span data-i18n="signup.switchText">Already have an account?</span> <a href="index.html" data-i18n="signup.switchLink">Log in</a></p>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/i18n.js"></script>
+  <script src="js/guard.js"></script>
+  <script src="js/auth.js"></script>
+</body>
+</html>

@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Profile — 10X CRM</title>
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar-root"></aside>
+
+    <main class="main">
+      <div class="page-head">
+        <div>
+          <h1 data-i18n="profile.title">Profile</h1>
+          <p data-i18n="profile.subtitle">Your account details and data controls.</p>
+        </div>
+      </div>
+
+      <div class="profile-head">
+        <div class="profile-avatar" id="profile-initials">--</div>
+        <div class="who">
+          <div class="name" id="profile-name">—</div>
+          <div class="meta" id="profile-meta">—</div>
+        </div>
+      </div>
+
+      <div class="profile-grid">
+        <div class="card">
+          <h2 data-i18n="card.editProfile">Edit Profile</h2>
+          <form id="profile-form" novalidate>
+            <div class="field" id="fullName-field">
+              <label for="fullName" data-i18n="field.fullName">Full Name</label>
+              <input type="text" id="fullName" name="fullName">
+              <div class="field-error" id="fullName-error"></div>
+            </div>
+            <div class="field" id="company-field">
+              <label for="company" data-i18n="field.company">Company</label>
+              <input type="text" id="company" name="company">
+              <div class="field-error" id="company-error"></div>
+            </div>
+            <button type="submit" class="btn btn-primary" style="width:auto;" data-i18n="btn.saveChanges">Save Changes</button>
+          </form>
+        </div>
+
+        <div class="card">
+          <h2 data-i18n="card.changePassword">Change Password</h2>
+          <form id="password-form" novalidate>
+            <div class="field" id="currentPassword-field">
+              <label for="currentPassword" data-i18n="field.currentPassword">Current Password</label>
+              <input type="password" id="currentPassword" name="currentPassword">
+              <div class="field-error" id="currentPassword-error"></div>
+            </div>
+            <div class="field" id="newPassword-field">
+              <label for="newPassword" data-i18n="field.newPassword">New Password</label>
+              <input type="password" id="newPassword" name="newPassword">
+              <div class="field-error" id="newPassword-error"></div>
+            </div>
+            <div class="field" id="confirmNewPassword-field">
+              <label for="confirmNewPassword" data-i18n="field.confirmNewPassword">Confirm New Password</label>
+              <input type="password" id="confirmNewPassword" name="confirmNewPassword">
+              <div class="field-error" id="confirmNewPassword-error"></div>
+            </div>
+            <button type="submit" class="btn btn-primary" style="width:auto;" data-i18n="btn.changePasswordSubmit">Change Password</button>
+          </form>
+        </div>
+      </div>
+
+      <div class="card mt-16">
+        <h2 data-i18n="card.data">Data</h2>
+        <p style="color:var(--text-dim); font-size:13.5px; margin-top:-8px;" data-i18n="data.description">
+          Reset the client ledger back to a fresh 30-client sample from the API. Your account and session stay untouched.
+        </p>
+        <button class="btn btn-danger-ghost" id="reset-data-btn" type="button" data-i18n="btn.resetData">Reset CRM Data</button>
+      </div>
+    </main>
+  </div>
+
+  <script src="js/i18n.js"></script>
+  <script src="js/guard.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/profile.js"></script>
+</body>
+</html>
