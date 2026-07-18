@@ -96,3 +96,122 @@ function toggleLang(){
     applyLangIcon();
     applyTheme(document.documentElement.getAttribute('data-theme') || 'light') 
 }
+
+function setFieldError(fieldId, message){
+    const wrap = document.getElementById(fieldId + '-field');
+    const err = document.getElementById(fieldId + '-error');
+    if(!wrap || !err) return;
+    if(message){
+        wrap.classList.add('input-error'); 
+        err.textContent = message;
+    } else{
+        wrap.classList.remove('input-error'); 
+        err.textContent = '';
+    }
+}
+
+function showToast(message, type = 'success'){
+    let stack = document.querySelector('.toast-stack');
+    if(!stack) {
+        stack = document.createElement('div'); 
+        stack.className = 'toast-stack'; 
+        document.body.appendChild(stack);
+    }
+    const toast = document.createElement('div');
+    toast.className = 'toast' + (type === 'error' ? ' err' : '');
+    toast.textContent = message;
+    stak.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+}
+
+function buildSidebar(activePage) {
+  const links = [
+    { key: 'dashboard.html', label: t('nav.dashboard') },
+    { key: 'clients.html', label: t('nav.clients') },
+    { key: 'profile.html', label: t('nav.profile') },
+  ];
+
+  const linksHtml = links
+    .map(
+      (l) => '<a class="nav-link' + (l.key === activePage ? ' active' : '') +
+        '" href="' + l.key + '" data-page="' + l.key + '"><span class="dot"></span>' + l.label + '</a>'
+    )
+    .join('');
+
+  return '' +
+    '<a class="brand" href="dashboard.html"><span class="stamp">10X</span> 10X CRM</a>' +
+    '<nav class="nav-links">' + linksHtml + '</nav>' +
+    '<div class="sidebar-footer">' +
+      '<div class="switch-row">' +
+        '<button class="switch-toggle" data-theme-toggle type="button" role="switch">' +
+          '<span class="switch-track">' +
+            '<span class="switch-icon switch-icon-left">' + ICON_SUN + '</span>' +
+            '<span class="switch-icon switch-icon-right">' + ICON_MOON + '</span>' +
+            '<span class="switch-knob"></span>' +
+          '</span>' +
+        '</button>' +
+        '<button class="switch-toggle" data-lang-toggle type="button" role="switch">' +
+          '<span class="switch-track">' +
+            '<span class="switch-icon switch-icon-left switch-text">EN</span>' +
+            '<span class="switch-icon switch-icon-right switch-text">ქა</span>' +
+            '<span class="switch-knob"></span>' +
+          '</span>' +
+        '</button>' +
+      '</div>' +
+      '<button class="logout-btn" data-logout type="button">' + t('sidebar.logout') + '</button>' +
+    '</div>';
+}
+
+function wireThemeLangToggles() {
+  applyTheme(localStorage.getItem(STORAGE_KEYS.theme) || 'light');
+  applyLangIcon();
+
+  const themeBtn = document.querySelector('[data-theme-toggle]');
+  if (themeBtn) themeBtn.addEventListener('click', toggleTheme);
+
+  const langBtn = document.querySelector('[data-lang-toggle]');
+  if (langBtn) langBtn.addEventListener('click', toggleLang);
+}
+
+function wireAppShell() {
+  const page = getCurrentPage();
+
+  const root = document.getElementById('sidebar-root');
+  if (root) {
+    root.innerHTML = buildSidebar(page);
+  }
+
+  wireThemeLangToggles();
+
+  const logoutBtn = document.querySelector('[data-logout]');
+  if (logoutBtn) {
+    logoutBtn.addEventListener('click', () => {
+      localStorage.removeItem(STORAGE_KEYS.session);
+      window.location.href = 'index.html';
+    });
+  }
+}
+
+/* ---------------- User store helpers (shared by auth.js / profile.js) ---------------- */
+
+function getUsers() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.users);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveUsers(users) {
+  localStorage.setItem(STORAGE_KEYS.users, JSON.stringify(users));
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  if (PROTECTED_PAGES.includes(getCurrentPage())) {
+    wireAppShell();
+  } else {
+    wireThemeLangToggles();
+  }
+});
+
