@@ -63,3 +63,55 @@ function wireProfileForm() {
 
   document.getElementById('fullName').addEventListener('input', () => setFieldError('fullName', ''));
 }
+
+function wirePasswordForm() {
+  const form = document.getElementById('password-form');
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+
+    const current = document.getElementById('currentPassword').value;
+    const next = document.getElementById('newPassword').value;
+    const confirm = document.getElementById('confirmNewPassword').value;
+
+    ['currentPassword', 'newPassword', 'confirmNewPassword'].forEach((id) => setFieldError(id, ''));
+
+    const users = getUsers();
+    const session = getSession();
+    const idx = users.findIndex((u) => u.id === session.userId);
+    if (idx === -1) return;
+    const user = users[idx];
+
+    let hasError = false;
+
+    if (current !== user.password) {
+      setFieldError('currentPassword', t('validation.currentPasswordWrong'));
+      hasError = true;
+    }
+
+    const hasLetter = /[a-zA-Z]/.test(next);
+    const hasDigit = /[0-9]/.test(next);
+    if (next.length < 8 || !hasLetter || !hasDigit) {
+      setFieldError('newPassword', t('error.passwordWeak'));
+      hasError = true;
+    } else if (next === user.password) {
+      setFieldError('newPassword', t('validation.passwordSameAsOld'));
+      hasError = true;
+    }
+
+    if (confirm !== next) {
+      setFieldError('confirmNewPassword', t('error.passwordMismatch'));
+      hasError = true;
+    }
+
+    if (hasError) return;
+
+    users[idx].password = next;
+    saveUsers(users);
+    form.reset();
+    showToast(t('toast.passwordChanged'));
+  });
+
+  ['currentPassword', 'newPassword', 'confirmNewPassword'].forEach((id) => {
+    document.getElementById(id).addEventListener('input', () => setFieldError(id, ''));
+  });
+}
