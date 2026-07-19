@@ -35,3 +35,19 @@ function tickClock() {
   document.getElementById('clock-time').textContent = now.toLocaleTimeString(locale);
   document.getElementById('clock-date').textContent = formatLongDate(now);
 }
+
+function renderStats(clients) {
+  const total = clients.length;
+  const active = clients.filter((c) => c.status !== 'Won' && c.status !== 'Lost').length;
+  const wonRevenue = clients
+    .filter((c) => c.status === 'Won')
+    .reduce((sum, c) => sum + c.dealValue, 0);
+  const newThisWeek = clients.filter(
+    (c) => (Date.now() - new Date(c.createdAt)) / 86400000 <= 7
+  ).length;
+
+  document.getElementById('stat-total').textContent = total;
+  document.getElementById('stat-active').textContent = active;
+  document.getElementById('stat-revenue').textContent = formatCurrency(wonRevenue);
+  document.getElementById('stat-new').textContent = newThisWeek;
+}
