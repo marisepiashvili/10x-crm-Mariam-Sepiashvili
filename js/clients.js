@@ -348,3 +348,32 @@ function wireKeyboardShortcuts() {
     }
   });
 }
+
+/* ---------------- Status change (P4.6) ---------------- */
+
+function onStatusChange(id, newStatus) {
+  const client = allClients.find((c) => String(c.id) === String(id));
+  if (!client) return;
+  client.status = newStatus;
+  saveClients(allClients);
+  renderClientList();
+}
+
+/* ---------------- Delete (P4.5) ---------------- */
+
+async function onDeleteClient(id) {
+  const confirmed = confirm(t('confirm.deleteClient'));
+  if (!confirmed) return;
+
+  try {
+    await fetch(`${API_BASE}/users/${id}`, { method: 'DELETE' });
+  } catch (err) {
+    // DummyJSON simulates deletes; a network hiccup or a 404 for
+    // locally-added clients is expected and does not block local removal.
+  } finally {
+    allClients = allClients.filter((c) => String(c.id) !== String(id));
+    saveClients(allClients);
+    renderClientList();
+    showToast(t('toast.clientDeleted'));
+  }
+}
