@@ -158,3 +158,124 @@ function renderGridView(visible) {
     });
   });
 }
+
+/* ---------------- Kanban view (drag & drop status change) ---------------- */
+
+function renderKanbanView(visible) {
+  const board = document.getElementById('kanban-board');
+
+  board.innerHTML = STATUS_ORDER.map((status) => {
+    const items = visible.filter((c) => c.status === status);
+    return `
+      <div class="kanban-column" data-status="${status}">
+        <div class="kanban-col-head">
+          <span>${t(STATUS_LABEL_KEY[status])}</span>
+          <span class="kanban-col-count">${items.length}</span>
+        </div>
+        <div class="kanban-cards">
+          ${items.map((c) => `
+            <div class="kanban-card" draggable="true" data-id="${c.id}">
+              <div class="kc-name">${escapeHtml(c.name)}</div>
+              <div class="kc-company">${escapeHtml(c.company || '—')}</div>
+              <div class="kc-value">${formatCurrency(c.dealValue)}</div>
+            </div>`).join('')}
+        </div>
+      </div>`;
+  }).join('');
+
+  board.querySelectorAll('.kanban-card').forEach((card) => {
+    card.addEventListener('dragstart', (e) => {
+      e.dataTransfer.setData('text/plain', card.dataset.id);
+      e.dataTransfer.effectAllowed = 'move';
+      card.classList.add('dragging');
+    });
+    card.addEventListener('dragend', () => card.classList.remove('dragging'));
+    card.addEventListener('click', () => openDetailModal(card.dataset.id));
+  });
+
+  board.querySelectorAll('.kanban-column').forEach((col) => {
+    col.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      col.classList.add('drag-over');
+    });
+    col.addEventListener('dragleave', () => col.classList.remove('drag-over'));
+    col.addEventListener('drop', (e) => {
+      e.preventDefault();
+      col.classList.remove('drag-over');
+      const id = e.dataTransfer.getData('text/plain');
+      onStatusChange(id, col.dataset.status);
+    });
+  });
+}
+
+/* ---------------- Toolbar wiring ---------------- */
+
+function wireToolbar() {
+  document.getElementById('search-input').addEventListener('input', (e) => {
+    const query = e.target.value;
+    viewState.search = query;
+    clearTimeout(searchTimer);
+
+    if (query.trim() === '') {
+      searchResults = null;
+      searching = false;
+      viewState.page = 1;
+      renderClientList();
+      return;
+    }
+
+    searching = true;
+    renderClientList();
+    searchTimer = setTimeout(() => runServerSearch(query.trim()), 400);
+  });
+
+  document.querySelectorAll('#filter-chips .chip').forEach((chip) => {
+    chip.addEventListener('click', () => {
+      document.querySelectorAll('#filter-chips .chip').forEach((c) => c.classList.remove('active'));
+      chip.classList.add('active');
+      viewState.status = chip.dataset.status;
+      viewState.page = 1;
+      renderClientList();
+    });
+  });
+
+  document.getElementById('sort-select').addEventListener('change', (e) => {
+    viewState.sort = e.target.value;
+    viewState.page = 1;
+    renderClientList();
+  });
+
+  document.querySelectorAll('.view-toggle-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.view-toggle-btn').forEach((b) => b.classList.remove('active'));
+      btn.classList.add('active');
+      viewState.view = btn.dataset.view;
+      renderClientList();
+    });
+  });
+
+  document.getElementById('export-csv-btn').addEventListener('click', exportClientsCsv);
+}
+
+/* ---------------- Server-side search (debounced) ---------------- */
+
+async function runServerSearch(query) {
+  const token = ++searchToken;
+  try {
+    const response = await fetch(`${API_BASE}/users/search?q=${encodeURIComponent(query)}`);
+    if (!response.ok) throw new Error('Search request failed');
+    const data = await response.json();
+    if (token !== searchToken) return; // a newer search already superseded this one
+    searchResults = data.users.map(mapApiUserToClient);
+  } catch (err) {
+    if (token !== searchToken) return;
+    searchResults = [];
+    showToast(t('toast.searchError'), 'error');
+  } finally {
+    if (token === searchToken) {
+      searching = false;
+      viewState.page = 1;
+      renderClientList();
+    }
+  }
+}
