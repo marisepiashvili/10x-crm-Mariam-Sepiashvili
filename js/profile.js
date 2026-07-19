@@ -115,3 +115,27 @@ function wirePasswordForm() {
     document.getElementById(id).addEventListener('input', () => setFieldError(id, ''));
   });
 }
+
+function wireResetData() {
+  document.getElementById('reset-data-btn').addEventListener('click', async () => {
+    const confirmed = confirm(t('confirm.resetData'));
+    if (!confirmed) return;
+
+    localStorage.removeItem(STORAGE_KEYS.clients);
+    try {
+      await loadClients();
+      showToast(t('toast.dataReset'));
+    } catch (err) {
+      showToast(t('toast.dataResetError'), 'error');
+    }
+  });
+}
+
+window.addEventListener('langchange', renderProfileInfo);
+
+document.addEventListener('DOMContentLoaded', () => {
+  renderProfileInfo();
+  wireProfileForm();
+  wirePasswordForm();
+  wireResetData();
+});
