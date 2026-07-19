@@ -141,4 +141,4 @@ function initLoginForm() {
 document.addEventListener('DOMContentLoaded', () => {
   initSignupForm();
   initLoginForm();
-});
+}); 
