@@ -44,3 +44,36 @@ async function loadClients() {
   saveClients(clients);
   return { clients, fromCache: false };
 }
+
+/**
+ * Runs the status filter -> text search -> sort pipeline on a *copy* of the
+ * array, so the underlying state is never mutated by a view operation.
+ */
+function getVisibleClients(clients, { status = 'All', search = '', sort = 'newest' } = {}) {
+  let list = clients.slice();
+
+  if (status && status !== 'All') {
+    list = list.filter((c) => c.status === status);
+  }
+
+  const q = search.trim().toLowerCase();
+  if (q) {
+    list = list.filter(
+      (c) => c.name.toLowerCase().includes(q) || c.company.toLowerCase().includes(q)
+    );
+  }
+
+  if (sort === 'newest') {
+    list.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  } else if (sort === 'name') {
+    list.sort((a, b) => a.name.localeCompare(b.name));
+  } else if (sort === 'value') {
+    list.sort((a, b) => b.dealValue - a.dealValue);
+  }
+
+  return list;
+}
+
+function formatCurrency(amount) {
+  return '$' + Math.round(amount).toLocaleString('en-US');
+}
