@@ -279,3 +279,72 @@ async function runServerSearch(query) {
     }
   }
 }
+
+/* ---------------- CSV export ---------------- */
+
+function csvEscape(value) {
+  const str = String(value == null ? '' : value);
+  return /[",\n]/.test(str) ? '"' + str.replace(/"/g, '""') + '"' : str;
+}
+
+function exportClientsCsv() {
+  const rows = getFilteredSorted();
+  const header = ['Name', 'Email', 'Phone', 'Company', 'Status', 'Deal Value', 'Created At'];
+  const lines = [header.join(',')];
+
+  rows.forEach((c) => {
+    lines.push([
+      csvEscape(c.name),
+      csvEscape(c.email),
+      csvEscape(c.phone),
+      csvEscape(c.company),
+      csvEscape(c.status),
+      csvEscape(c.dealValue),
+      csvEscape(c.createdAt),
+    ].join(','));
+  });
+
+  const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `clients-${new Date().toISOString().slice(0, 10)}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+/* ---------------- Keyboard shortcuts ---------------- */
+
+function isTypingTarget(el) {
+  if (!el) return false;
+  const tag = el.tagName;
+  return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || el.isContentEditable;
+}
+
+function wireKeyboardShortcuts() {
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      if (document.getElementById('detail-modal-backdrop').classList.contains('open')) {
+        closeDetailModal();
+      } else if (document.getElementById('add-modal-backdrop').classList.contains('open')) {
+        closeAddModal();
+      }
+      return;
+    }
+
+    if (e.metaKey || e.ctrlKey || e.altKey || isTypingTarget(document.activeElement)) return;
+
+    if (e.key === '/') {
+      e.preventDefault();
+      document.getElementById('search-input').focus();
+    } else if (e.key === 'n' || e.key === 'N') {
+      e.preventDefault();
+      openAddModal();
+    } else if (e.key === 'e' || e.key === 'E') {
+      e.preventDefault();
+      exportClientsCsv();
+    }
+  });
+}
