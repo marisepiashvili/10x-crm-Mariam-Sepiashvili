@@ -1,3 +1,10 @@
+/**
+ * data.js
+ * Shared client-data layer used by dashboard.js and clients.js.
+ *  - loadClients(): reads crm_clients from localStorage, or fetches DummyJSON on first run
+ *  - saveClients(list): persists to localStorage
+ *  - getVisibleClients(list, {status, search, sort}): filter -> search -> sort pipeline
+ */
 
 const API_BASE = 'https://dummyjson.com';
 
@@ -29,7 +36,11 @@ function mapApiUserToClient(user) {
   };
 }
 
-
+/**
+ * Loads clients: from localStorage if present, otherwise from the DummyJSON API.
+ * Returns { clients, fromCache }. Throws on network failure so callers can show
+ * the FULL-level error/retry state.
+ */
 async function loadClients() {
   const cached = getClients();
   if (cached) {

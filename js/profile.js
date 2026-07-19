@@ -2,22 +2,6 @@
  * profile.js — P5
  */
 
-function getCurrentUser() {
-  const session = getSession();
-  if (!session) return null;
-  const users = getUsers();
-  return users.find((u) => u.id === session.userId) || null;
-}
-
-function initials(fullName) {
-  return fullName
-    .split(' ')
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((p) => p[0].toUpperCase())
-    .join('');
-}
-
 function renderProfileInfo() {
   const user = getCurrentUser();
   if (!user) return;

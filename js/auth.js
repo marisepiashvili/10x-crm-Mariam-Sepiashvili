@@ -1,7 +1,13 @@
-function clearAllErrors(fieldIds){
-    fieldIds.forEach((id) => setFieldError(id, ''));
-};
+/**
+ * auth.js — Sign Up (P1) and Login (P2) logic.
+ * Relies on getUsers/saveUsers/showToast from guard.js (loaded first).
+ */
 
+function clearAllErrors(fieldIds) {
+  fieldIds.forEach((id) => setFieldError(id, ''));
+}
+
+/* ---------------- Sign Up (P1) ---------------- */
 
 function initSignupForm() {
   const form = document.getElementById('signup-form');
@@ -81,6 +87,8 @@ function initSignupForm() {
   });
 }
 
+/* ---------------- Login (P2) ---------------- */
+
 function initLoginForm() {
   const form = document.getElementById('login-form');
   if (!form) return;
@@ -141,4 +149,4 @@ function initLoginForm() {
 document.addEventListener('DOMContentLoaded', () => {
   initSignupForm();
   initLoginForm();
-}); 
+});

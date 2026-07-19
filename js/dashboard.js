@@ -180,10 +180,99 @@ function renderRecent(clients) {
   `).join('');
 }
 
-function escapeHtml(str) {
-  const div = document.createElement('div');
-  div.textContent = str == null ? '' : str;
-  return div.innerHTML;
+function renderTopDeals(clients) {
+  const container = document.getElementById('top-deals');
+  if (!container) return;
+
+  const top = clients
+    .filter((c) => c.status === 'Won')
+    .sort((a, b) => b.dealValue - a.dealValue)
+    .slice(0, 5);
+
+  if (top.length === 0) {
+    container.innerHTML = `<p class="state-msg">${t('state.noClientsYet')}</p>`;
+    return;
+  }
+
+  container.innerHTML = top.map((c, i) => `
+    <div class="recent-row">
+      <span class="rank-badge rank-${i + 1}">${i + 1}</span>
+      <img class="avatar" src="${c.image}" alt="">
+      <div class="who">
+        <div class="n">${escapeHtml(c.name)}</div>
+        <div class="c">${escapeHtml(c.company || '—')}</div>
+        <div class="deal-age">${t('detail.clientSince', { date: new Date(c.createdAt).toLocaleDateString() })}</div>
+      </div>
+      <span class="amount">${formatCurrency(c.dealValue)}</span>
+    </div>
+  `).join('');
+}
+
+async function renderActivityList(container, items, emptyMessage, iconClass, iconGlyph, useBubble) {
+  if (!container) return;
+  if (items.length === 0) {
+    container.innerHTML = `<p class="state-msg">${emptyMessage}</p>`;
+    return;
+  }
+  // Only the (up to 5) rows actually being rendered get translated, not
+  // every note/call across every client -- keeps this to a handful of
+  // network calls at most, and translateText() caches repeats anyway.
+  const rows = await Promise.all(items.map(async ({ note, date, client }) => {
+    const text = await getTranslatedNoteText(note);
+    const important = useBubble && note.important;
+    return `
+      <div class="recent-row${important ? ' is-important' : ''}">
+        <span class="activity-icon ${iconClass}">${iconGlyph}</span>
+        <div class="who">
+          ${useBubble
+            ? `<div class="c">${important ? '⭐ ' : ''}${escapeHtml(client.name)}</div><div class="note-bubble">${escapeHtml(text)}</div>`
+            : `<div class="n">${escapeHtml(client.name)}</div><div class="c">${escapeHtml(text)}</div>`}
+        </div>
+        <span class="date">${escapeHtml(date)}</span>
+        ${useBubble ? `
+        <div class="note-actions">
+          <button class="note-star-btn${important ? ' active' : ''}" type="button" title="${t('btn.markImportant')}">★</button>
+          <button class="note-delete-btn" type="button" title="${t('btn.deleteNote')}">&times;</button>
+        </div>` : ''}
+      </div>`;
+  }));
+  container.innerHTML = rows.join('');
+
+  if (useBubble) {
+    container.querySelectorAll('.note-star-btn').forEach((btn, i) => {
+      btn.addEventListener('click', () => {
+        toggleNoteImportant(dashboardClients, items[i].note);
+        renderActivity(dashboardClients);
+      });
+    });
+    container.querySelectorAll('.note-delete-btn').forEach((btn, i) => {
+      btn.addEventListener('click', () => {
+        deleteClientNote(dashboardClients, items[i].client, items[i].note);
+        renderActivity(dashboardClients);
+      });
+    });
+  }
+}
+
+async function renderActivity(clients) {
+  const notes = [];
+  const calls = [];
+
+  clients.forEach((c) => {
+    (c.notes || []).forEach((n) => {
+      const item = { note: n, date: n.date, client: c };
+      (isCallNote(n) ? calls : notes).push(item);
+    });
+  });
+
+  notes.sort((a, b) => {
+    const importantDiff = (b.note.important ? 1 : 0) - (a.note.important ? 1 : 0);
+    return importantDiff !== 0 ? importantDiff : new Date(b.date) - new Date(a.date);
+  });
+  calls.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+  await renderActivityList(document.getElementById('activity-notes'), notes.slice(0, 20), t('notes.empty'), 'activity-icon-note', '📝', true);
+  await renderActivityList(document.getElementById('activity-calls'), calls.slice(0, 20), t('state.noCallsYet'), 'activity-icon-call', '📞', false);
 }
 
 async function initDashboard() {
@@ -197,6 +286,8 @@ async function initDashboard() {
     renderStats(clients);
     renderPipeline(clients);
     renderRecent(clients);
+    renderTopDeals(clients);
+    await renderActivity(clients);
   } catch (err) {
     showToast(t('toast.dashboardLoadError'), 'error');
   }
@@ -208,6 +299,8 @@ window.addEventListener('langchange', () => {
   if (dashboardClients.length) {
     renderPipeline(dashboardClients);
     renderRecent(dashboardClients);
+    renderTopDeals(dashboardClients);
+    renderActivity(dashboardClients);
   }
 });
 

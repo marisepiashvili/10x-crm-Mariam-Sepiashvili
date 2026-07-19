@@ -1,8 +1,15 @@
-const I18N_STORAGE_KEY = 'crm_lang'
+/**
+ * i18n.js
+ * English/Georgian translation dictionary + apply/switch helpers.
+ * Language choice persists in crm_lang (localStorage) and applies on every page.
+ * Static markup opts in via data-i18n="key" / data-i18n-placeholder="key".
+ * Dynamically-rendered strings call t('key', { var: value }) directly.
+ */
 
+const I18N_STORAGE_KEY = 'crm_lang';
 
 const TRANSLATIONS = {
-    en:{
+  en: {
     'nav.dashboard': 'Dashboard',
     'nav.clients': 'Clients',
     'nav.profile': 'Profile',
@@ -52,17 +59,21 @@ const TRANSLATIONS = {
 
     'dashboard.greeting': 'Welcome back, {{name}}!',
     'dashboard.greetingDefault': 'Welcome back!',
-    'dashboard.subtitle': "Here's where the pipeline stands right now.",
+    'dashboard.subtitle': "Here is the current status of the pipeline.",
     'stat.totalClients': 'Total Clients',
     'stat.activeDeals': 'Active Deals',
     'stat.wonRevenue': 'Won Revenue',
     'stat.newThisWeek': 'New This Week',
     'card.pipelineOverview': 'Pipeline Overview',
     'card.recentClients': 'Recent Clients',
+    'card.topDeals': 'Top Deals',
+    'card.recentActivity': 'Recent Activity',
+    'card.activityCalls': 'Calls',
     'link.viewAllClients': 'View all clients →',
     'toast.dashboardLoadError': 'Could not load dashboard data.',
     'pipeline.total': 'Total',
     'pipeline.winRate': 'Win Rate',
+    'state.noCallsYet': 'No calls logged yet.',
 
     'status.lead': 'Lead',
     'status.contacted': 'Contacted',
@@ -96,12 +107,23 @@ const TRANSLATIONS = {
     'notes.empty': 'No notes yet.',
     'notes.placeholder': 'Write a note...',
     'btn.addNote': '+ Add note',
-    'btn.remindMe': 'Remind me in 1 min',
+    'btn.deleteNote': 'Delete note',
+    'btn.markImportant': 'Mark as important',
+    'btn.setReminder': 'Set Reminder',
+    'reminder.min1': '1 min',
+    'reminder.min5': '5 min',
+    'reminder.min15': '15 min',
+    'reminder.min30': '30 min',
+    'reminder.hour1': '1 hour',
+    'reminder.hour2': '2 hours',
+    'reminder.hour3': '3 hours',
+    'reminder.hour6': '6 hours',
+    'reminder.hour12': '12 hours',
     'btn.startCall': 'Start Call',
     'btn.endCall': 'End Call',
     'note.callDuration': 'Call duration: {{duration}}',
     'toast.reminderSet': 'Reminder set ✓',
-    'toast.followUp': '⏰ Follow up: {{name}}',
+    'toast.reminderFired': '⏰ Reminder: {{text}}',
     'toast.clientDeleted': 'Client deleted',
     'toast.clientAdded': 'Client added ✓',
     'toast.addClientError': 'Could not add client. Please try again.',
@@ -138,8 +160,9 @@ const TRANSLATIONS = {
     'validation.passwordSameAsOld': 'New password must be different from the current one',
     'profile.meta': '{{email}} · {{company}} · Member since {{date}}',
     'profile.noCompany': 'No company',
-    },
-    ka:{
+  },
+
+  ka: {
     'nav.dashboard': 'დეშბორდი',
     'nav.clients': 'კლიენტები',
     'nav.profile': 'პროფილი',
@@ -189,17 +212,21 @@ const TRANSLATIONS = {
 
     'dashboard.greeting': 'კეთილი იყოს შენი დაბრუნება, {{name}}!',
     'dashboard.greetingDefault': 'კეთილი იყოს დაბრუნება!',
-    'dashboard.subtitle': 'აი, როგორ გამოიყურება პაიფლაინი ახლა.',
+    'dashboard.subtitle': 'თქვენი მიმდინარე პროცესების სტატუსი.',
     'stat.totalClients': 'კლიენტების რაოდენობა',
     'stat.activeDeals': 'აქტიური გარიგებები',
     'stat.wonRevenue': 'მოგებული შემოსავალი',
     'stat.newThisWeek': 'ახალი ამ კვირაში',
-    'card.pipelineOverview': 'პაიფლაინის მიმოხილვა',
+    'card.pipelineOverview': 'პროცესების მიმოხილვა',
     'card.recentClients': 'ბოლო კლიენტები',
+    'card.topDeals': 'საუკეთესო გარიგებები',
+    'card.recentActivity': 'ბოლო აქტივობა',
+    'card.activityCalls': 'ზარები',
     'link.viewAllClients': 'ყველა კლიენტის ნახვა →',
     'toast.dashboardLoadError': 'დაფის მონაცემების ჩატვირთვა ვერ მოხერხდა.',
     'pipeline.total': 'სულ',
     'pipeline.winRate': 'მოგების მაჩვენებელი',
+    'state.noCallsYet': 'ზარები ჯერ არ არის.',
 
     'status.lead': 'ლიდი',
     'status.contacted': 'დაკავშირებული',
@@ -233,12 +260,23 @@ const TRANSLATIONS = {
     'notes.empty': 'შენიშვნები ჯერ არ არის.',
     'notes.placeholder': 'დაწერეთ შენიშვნა...',
     'btn.addNote': '+ შენიშვნის დამატება',
-    'btn.remindMe': 'შემახსენე 1 წუთში',
+    'btn.deleteNote': 'შენიშვნის წაშლა',
+    'btn.markImportant': 'მონიშვნა მნიშვნელოვნად',
+    'btn.setReminder': 'შეხსენების დაყენება',
+    'reminder.min1': '1 წუთი',
+    'reminder.min5': '5 წუთი',
+    'reminder.min15': '15 წუთი',
+    'reminder.min30': '30 წუთი',
+    'reminder.hour1': '1 საათი',
+    'reminder.hour2': '2 საათი',
+    'reminder.hour3': '3 საათი',
+    'reminder.hour6': '6 საათი',
+    'reminder.hour12': '12 საათი',
     'btn.startCall': 'ზარის დაწყება',
     'btn.endCall': 'ზარის დასრულება',
     'note.callDuration': 'ზარის ხანგრძლივობა: {{duration}}',
     'toast.reminderSet': 'შეხსენება დაყენებულია ✓',
-    'toast.followUp': '⏰ დაუკავშირდით: {{name}}',
+    'toast.reminderFired': '⏰ შეხსენება: {{text}}',
     'toast.clientDeleted': 'კლიენტი წაიშალა',
     'toast.clientAdded': 'კლიენტი დაემატა ✓',
     'toast.addClientError': 'კლიენტის დამატება ვერ მოხერხდა. სცადეთ ხელახლა.',
@@ -275,16 +313,16 @@ const TRANSLATIONS = {
     'validation.passwordSameAsOld': 'ახალი პაროლი უნდა განსხვავდებოდეს მიმდინარესგან',
     'profile.meta': '{{email}} · {{company}} · წევრია {{date}}-დან',
     'profile.noCompany': 'კომპანია არ არის მითითებული',
-    }
+  },
 };
 
 const WEEKDAYS = {
-    en: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
-    ka: ['კვირა', 'ორშაბათი', 'სამშაბათი', 'ოთხშაბათი', 'ხუთშაბათი', 'პარასკევი', 'შაბათი'],
+  en: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
+  ka: ['კვირა', 'ორშაბათი', 'სამშაბათი', 'ოთხშაბათი', 'ხუთშაბათი', 'პარასკევი', 'შაბათი'],
 };
 const MONTHS = {
-    en: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
-    ka: ['იანვარი', 'თებერვალი', 'მარტი', 'აპრილი', 'მაისი', 'ივნისი', 'ივლისი', 'აგვისტო', 'სექტემბერი', 'ოქტომბერი', 'ნოემბერი', 'დეკემბერი'],
+  en: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
+  ka: ['იანვარი', 'თებერვალი', 'მარტი', 'აპრილი', 'მაისი', 'ივნისი', 'ივლისი', 'აგვისტო', 'სექტემბერი', 'ოქტომბერი', 'ნოემბერი', 'დეკემბერი'],
 };
 
 function formatLongDate(date) {
@@ -296,21 +334,9 @@ function formatLongDate(date) {
   return lang === 'ka' ? `${weekday}, ${day} ${month}, ${year}` : `${weekday}, ${month} ${day}, ${year}`;
 }
 
-function getLang(){
-    return localStorage.getItem(I18N_STORAGE_KEY) || 'en';
+function getLang() {
+  return localStorage.getItem(I18N_STORAGE_KEY) || 'en';
 }
-
-function t(key, vars){
-    const lang = getLang();
-    let str = (TRANSLATIONS[lang] && TRANSLATIONS[lang][key]) || TRANSLATIONS.en[key] || key;
-    if(vars){
-         Object.keys(vars).forEach((k) => {
-      str = str.replace(new RegExp('{{' + k + '}}', 'g'), vars[k]);
-    });
-    }
-    return str;
-}
-
 
 function setLang(lang) {
   localStorage.setItem(I18N_STORAGE_KEY, lang);
@@ -318,6 +344,16 @@ function setLang(lang) {
   window.dispatchEvent(new CustomEvent('langchange', { detail: { lang } }));
 }
 
+function t(key, vars) {
+  const lang = getLang();
+  let str = (TRANSLATIONS[lang] && TRANSLATIONS[lang][key]) || TRANSLATIONS.en[key] || key;
+  if (vars) {
+    Object.keys(vars).forEach((k) => {
+      str = str.replace(new RegExp('{{' + k + '}}', 'g'), vars[k]);
+    });
+  }
+  return str;
+}
 
 function applyTranslations() {
   document.documentElement.setAttribute('lang', getLang() === 'ka' ? 'ka' : 'en');
@@ -331,5 +367,3 @@ function applyTranslations() {
 }
 
 document.addEventListener('DOMContentLoaded', applyTranslations);
-
-

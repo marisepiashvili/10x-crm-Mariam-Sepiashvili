@@ -56,12 +56,6 @@ function getFilteredSorted() {
   return getVisibleClients(getListSource(), { status: viewState.status, search: '', sort: viewState.sort });
 }
 
-function escapeHtml(str) {
-  const div = document.createElement('div');
-  div.textContent = str == null ? '' : str;
-  return div.innerHTML;
-}
-
 function renderClientList() {
   const gridArea = document.getElementById('clients-area');
   const kanbanBoard = document.getElementById('kanban-board');
@@ -113,7 +107,7 @@ function renderGridView(visible) {
       <div class="client-bottom">
         <span class="deal-value">${formatCurrency(client.dealValue)}</span>
         <div class="client-actions">
-          <select class="status-select" data-id="${client.id}">
+          <select class="status-select ${statusBadgeClass(client.status)}" data-id="${client.id}">
             ${STATUS_ORDER.map(
               (s) => `<option value="${s}" ${s === client.status ? 'selected' : ''}>${t(STATUS_LABEL_KEY[s])}</option>`
             ).join('')}
@@ -377,6 +371,7 @@ async function onDeleteClient(id) {
     showToast(t('toast.clientDeleted'));
   }
 }
+
 /* ---------------- Add Client modal (P4.4) ---------------- */
 
 function openAddModal() {
@@ -503,7 +498,7 @@ function logCallNote(clientId, duration) {
   const client = allClients.find((c) => String(c.id) === String(clientId));
   if (!client) return;
   client.notes = client.notes || [];
-  client.notes.push({ text: t('note.callDuration', { duration }), date: new Date().toLocaleString() });
+  client.notes.push({ text: t('note.callDuration', { duration }), date: new Date().toLocaleString(), type: 'call', duration });
   saveClients(allClients);
   if (document.getElementById('detail-modal-backdrop').classList.contains('open')) {
     renderNotes(client);
@@ -560,7 +555,13 @@ function openDetailModal(id) {
     </div>
     <div class="detail-grid">
       <div><span>${t('detail.company')}</span>${escapeHtml(client.company || '—')}</div>
-      <div><span>${t('detail.status')}</span><span class="badge ${statusBadgeClass(client.status)}">${t(STATUS_LABEL_KEY[client.status])}</span></div>
+      <div><span>${t('detail.status')}</span>
+        <select class="status-select ${statusBadgeClass(client.status)}" id="detail-status-select">
+          ${STATUS_ORDER.map(
+            (s) => `<option value="${s}" ${s === client.status ? 'selected' : ''}>${t(STATUS_LABEL_KEY[s])}</option>`
+          ).join('')}
+        </select>
+      </div>
       <div><span>${t('detail.email')}</span>${escapeHtml(client.email)}</div>
       <div><span>${t('detail.phone')}</span>${escapeHtml(client.phone || '—')}</div>
       <div style="grid-column:1 / -1;"><span>${t('detail.dealValue')}</span>${formatCurrency(client.dealValue)}</div>
@@ -575,7 +576,20 @@ function openDetailModal(id) {
       <input type="text" id="note-input" placeholder="${t('notes.placeholder')}">
       <button class="btn btn-ghost" id="add-note-btn" type="button">${t('btn.addNote')}</button>
     </div>
-    <button class="btn btn-ghost" id="remind-btn" type="button" style="width:100%;">${t('btn.remindMe')}</button>
+    <div class="reminder-row">
+      <select class="sort-select" id="reminder-select">
+        <option value="1">${t('reminder.min1')}</option>
+        <option value="5">${t('reminder.min5')}</option>
+        <option value="15">${t('reminder.min15')}</option>
+        <option value="30">${t('reminder.min30')}</option>
+        <option value="60">${t('reminder.hour1')}</option>
+        <option value="120">${t('reminder.hour2')}</option>
+        <option value="180">${t('reminder.hour3')}</option>
+        <option value="360">${t('reminder.hour6')}</option>
+        <option value="720">${t('reminder.hour12')}</option>
+      </select>
+      <button class="btn btn-ghost" id="remind-btn" type="button">${t('btn.setReminder')}</button>
+    </div>
   `;
 
   renderNotes(client);
@@ -588,6 +602,11 @@ function openDetailModal(id) {
     }
   });
 
+  document.getElementById('detail-status-select').addEventListener('change', (e) => {
+    onStatusChange(client.id, e.target.value);
+    e.target.className = 'status-select ' + statusBadgeClass(e.target.value);
+  });
+
   document.getElementById('call-toggle-btn').addEventListener('click', () => toggleCall(client.id));
 
   document.getElementById('add-note-btn').addEventListener('click', () => addNote(client.id));
@@ -596,8 +615,13 @@ function openDetailModal(id) {
   });
 
   document.getElementById('remind-btn').addEventListener('click', () => {
+    const minutes = parseInt(document.getElementById('reminder-select').value, 10);
+    const noteText = document.getElementById('note-input').value.trim();
+    const reminderText = noteText ? `${client.name} — ${noteText}` : client.name;
     showToast(t('toast.reminderSet'));
-    setTimeout(() => showToast(t('toast.followUp', { name: client.name })), 60000);
+    setTimeout(() => {
+      showTopToast(t('toast.reminderFired', { text: reminderText }));
+    }, minutes * 60000);
   });
 
   backdrop.classList.add('open');
@@ -611,16 +635,41 @@ function closeDetailModal() {
   document.getElementById('detail-modal-backdrop').classList.remove('open');
 }
 
-function renderNotes(client) {
+async function renderNotes(client) {
   const list = document.getElementById('notes-list');
   if (!client.notes || client.notes.length === 0) {
     list.innerHTML = `<div class="note-empty">${t('notes.empty')}</div>`;
     return;
   }
   const sorted = client.notes.slice().sort((a, b) => new Date(a.date) - new Date(b.date));
-  list.innerHTML = sorted.map(
-    (n) => `<div class="note-item">${escapeHtml(n.text)}<span class="ndate">${escapeHtml(n.date)}</span></div>`
-  ).join('');
+  const rows = await Promise.all(sorted.map(async (n) => {
+    const text = await getTranslatedNoteText(n);
+    return `
+      <div class="note-item${n.important ? ' is-important' : ''}">
+        <div class="note-body">${escapeHtml(text)}<span class="ndate">${escapeHtml(n.date)}</span></div>
+        <div class="note-actions">
+          <button class="note-star-btn${n.important ? ' active' : ''}" type="button" title="${t('btn.markImportant')}">★</button>
+          <button class="note-delete-btn" type="button" title="${t('btn.deleteNote')}">&times;</button>
+        </div>
+      </div>`;
+  }));
+  list.innerHTML = rows.join('');
+
+  // sorted[i] and the rendered .note-item at the same index are the exact
+  // same object references as client.notes -- no id field needed to find
+  // which one to act on.
+  list.querySelectorAll('.note-star-btn').forEach((btn, i) => {
+    btn.addEventListener('click', () => {
+      toggleNoteImportant(allClients, sorted[i]);
+      renderNotes(client);
+    });
+  });
+  list.querySelectorAll('.note-delete-btn').forEach((btn, i) => {
+    btn.addEventListener('click', () => {
+      deleteClientNote(allClients, client, sorted[i]);
+      renderNotes(client);
+    });
+  });
 }
 
 function addNote(clientId) {
@@ -632,7 +681,7 @@ function addNote(clientId) {
   if (!client) return;
 
   client.notes = client.notes || [];
-  client.notes.push({ text, date: new Date().toLocaleString() });
+  client.notes.push({ text, date: new Date().toLocaleString(), type: 'note', lang: getLang() });
   saveClients(allClients);
 
   input.value = '';

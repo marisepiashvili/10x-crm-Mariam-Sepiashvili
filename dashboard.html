@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Dashboard — 10X CRM</title>
+<script>try{document.documentElement.setAttribute('data-theme', localStorage.getItem('crm_theme') || 'light');}catch(e){document.documentElement.setAttribute('data-theme','light');}</script>
 <link rel="stylesheet" href="css/styles.css?v=2">
 </head>
 <body>
@@ -52,6 +53,21 @@
           <h2 data-i18n="card.recentClients">Recent Clients</h2>
           <div class="recent-list" id="recent-clients"></div>
           <a class="link-more" href="clients.html" data-i18n="link.viewAllClients">View all clients &rarr;</a>
+        </div>
+      </div>
+
+      <div class="dash-grid mt-16">
+        <div class="card">
+          <h2 data-i18n="card.topDeals">Top Deals</h2>
+          <div class="recent-list" id="top-deals"></div>
+        </div>
+
+        <div class="card">
+          <h2 data-i18n="card.recentActivity">Recent Activity</h2>
+          <h3 class="activity-subhead notes-subhead" data-i18n="notes.title">Notes</h3>
+          <div class="recent-list" id="activity-notes"></div>
+          <h3 class="activity-subhead calls-subhead" data-i18n="card.activityCalls">Calls</h3>
+          <div class="recent-list" id="activity-calls"></div>
         </div>
       </div>
     </main>
