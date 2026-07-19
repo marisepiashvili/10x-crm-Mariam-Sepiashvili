@@ -29,6 +29,7 @@ function mapApiUserToClient(user) {
   };
 }
 
+
 async function loadClients() {
   const cached = getClients();
   if (cached) {
