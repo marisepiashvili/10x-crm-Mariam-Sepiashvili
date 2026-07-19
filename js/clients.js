@@ -377,3 +377,277 @@ async function onDeleteClient(id) {
     showToast(t('toast.clientDeleted'));
   }
 }
+/* ---------------- Add Client modal (P4.4) ---------------- */
+
+function openAddModal() {
+  document.getElementById('add-modal-backdrop').classList.add('open');
+}
+
+function closeAddModal() {
+  const backdrop = document.getElementById('add-modal-backdrop');
+  const form = document.getElementById('add-client-form');
+  backdrop.classList.remove('open');
+  form.reset();
+  ['name', 'clientEmail', 'phone', 'company', 'dealValue'].forEach((id) => setFieldError(id, ''));
+}
+
+function wireAddModal() {
+  const backdrop = document.getElementById('add-modal-backdrop');
+  const openBtn = document.getElementById('open-add-client');
+  const closeBtn = document.getElementById('add-modal-close');
+  const form = document.getElementById('add-client-form');
+
+  openBtn.addEventListener('click', openAddModal);
+  closeBtn.addEventListener('click', closeAddModal);
+  backdrop.addEventListener('click', (e) => { if (e.target === backdrop) closeAddModal(); });
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const name = document.getElementById('name').value;
+    const email = document.getElementById('clientEmail').value;
+    const phone = document.getElementById('phone').value;
+    const company = document.getElementById('company').value;
+    const dealValueRaw = document.getElementById('dealValue').value;
+    const status = document.getElementById('status').value;
+
+    const fieldIds = ['name', 'clientEmail', 'phone', 'company', 'dealValue'];
+    fieldIds.forEach((id) => setFieldError(id, ''));
+    let hasError = false;
+
+    if (name.trim().length < 3) {
+      setFieldError('name', t('validation.nameShort'));
+      hasError = true;
+    }
+
+    const atIndex = email.indexOf('@');
+    const validFormat = atIndex > 0 && email.indexOf('.', atIndex) > atIndex;
+    if (!validFormat) {
+      setFieldError('clientEmail', t('validation.emailInvalid'));
+      hasError = true;
+    } else if (allClients.some((c) => c.email.toLowerCase() === email.trim().toLowerCase())) {
+      setFieldError('clientEmail', t('validation.emailExists'));
+      hasError = true;
+    }
+
+    if (phone.trim() !== '' && phone.trim().length < 6) {
+      setFieldError('phone', t('validation.phoneShort'));
+      hasError = true;
+    }
+
+    const dealValue = Number(dealValueRaw);
+    if (dealValueRaw.trim() === '' || isNaN(dealValue) || dealValue <= 0) {
+      setFieldError('dealValue', t('validation.dealValueInvalid'));
+      hasError = true;
+    }
+
+    if (hasError) return;
+
+    try {
+      const response = await fetch(`${API_BASE}/users/add`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ firstName: name.trim() }),
+      });
+      const result = await response.json();
+
+      const newClient = {
+        id: result.id || Date.now(),
+        name: name.trim(),
+        email: email.trim().toLowerCase(),
+        phone: phone.trim(),
+        company: company.trim(),
+        image: `https://dummyjson.com/icon/${encodeURIComponent(name.trim().split(' ')[0].toLowerCase())}/128`,
+        status: status,
+        dealValue: dealValue,
+        notes: [],
+        createdAt: new Date().toISOString(),
+      };
+
+      allClients.unshift(newClient);
+      saveClients(allClients);
+      renderClientList();
+      closeAddModal();
+      showToast(t('toast.clientAdded'));
+    } catch (err) {
+      showToast(t('toast.addClientError'), 'error');
+    }
+  });
+
+  ['name', 'clientEmail', 'phone', 'dealValue'].forEach((id) => {
+    document.getElementById(id).addEventListener('input', () => setFieldError(id, ''));
+  });
+}
+
+/* ---------------- Call timer (Start/End Call stopwatch) ---------------- */
+
+let callState = { interval: null, seconds: 0, clientId: null };
+
+function formatMMSS(totalSeconds) {
+  const m = Math.floor(totalSeconds / 60);
+  const s = totalSeconds % 60;
+  return String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+}
+
+function updateCallDisplay() {
+  const el = document.getElementById('call-timer-display');
+  if (el) el.textContent = formatMMSS(callState.seconds);
+}
+
+function resetCallState() {
+  if (callState.interval) clearInterval(callState.interval);
+  callState = { interval: null, seconds: 0, clientId: null };
+}
+
+function logCallNote(clientId, duration) {
+  const client = allClients.find((c) => String(c.id) === String(clientId));
+  if (!client) return;
+  client.notes = client.notes || [];
+  client.notes.push({ text: t('note.callDuration', { duration }), date: new Date().toLocaleString() });
+  saveClients(allClients);
+  if (document.getElementById('detail-modal-backdrop').classList.contains('open')) {
+    renderNotes(client);
+  }
+}
+
+function toggleCall(clientId) {
+  const btn = document.getElementById('call-toggle-btn');
+  const wrap = document.getElementById('call-timer');
+
+  if (callState.interval) {
+    clearInterval(callState.interval);
+    const duration = formatMMSS(callState.seconds);
+    logCallNote(clientId, duration);
+    callState = { interval: null, seconds: 0, clientId: null };
+    updateCallDisplay();
+    if (btn) btn.textContent = t('btn.startCall');
+    if (wrap) wrap.classList.remove('active');
+  } else {
+    callState.clientId = clientId;
+    callState.seconds = 0;
+    updateCallDisplay();
+    callState.interval = setInterval(() => {
+      callState.seconds++;
+      updateCallDisplay();
+    }, 1000);
+    if (btn) btn.textContent = t('btn.endCall');
+    if (wrap) wrap.classList.add('active');
+  }
+}
+
+/* ---------------- Details modal (P4.8) ---------------- */
+
+function openDetailModal(id) {
+  const client = allClients.find((c) => String(c.id) === String(id));
+  if (!client) return;
+
+  resetCallState();
+
+  const backdrop = document.getElementById('detail-modal-backdrop');
+  const content = document.getElementById('detail-modal-content');
+
+  content.innerHTML = `
+    <div class="modal-head">
+      <h3>${t('modal.clientDetails.title')}</h3>
+      <button class="modal-close" id="detail-modal-close" type="button">&times;</button>
+    </div>
+    <div class="detail-top">
+      <img src="${client.image}" alt="">
+      <div>
+        <div class="client-name">${escapeHtml(client.name)}</div>
+        <div class="detail-meta">${t('detail.clientSince', { date: new Date(client.createdAt).toLocaleDateString() })}</div>
+      </div>
+    </div>
+    <div class="detail-grid">
+      <div><span>${t('detail.company')}</span>${escapeHtml(client.company || '—')}</div>
+      <div><span>${t('detail.status')}</span><span class="badge ${statusBadgeClass(client.status)}">${t(STATUS_LABEL_KEY[client.status])}</span></div>
+      <div><span>${t('detail.email')}</span>${escapeHtml(client.email)}</div>
+      <div><span>${t('detail.phone')}</span>${escapeHtml(client.phone || '—')}</div>
+      <div style="grid-column:1 / -1;"><span>${t('detail.dealValue')}</span>${formatCurrency(client.dealValue)}</div>
+    </div>
+    <div class="call-timer" id="call-timer">
+      <span class="call-timer-display" id="call-timer-display">00:00</span>
+      <button class="btn btn-ghost" id="call-toggle-btn" type="button">${t('btn.startCall')}</button>
+    </div>
+    <h3 style="font-family:var(--font-display); font-size:15px; margin:0 0 8px;">${t('notes.title')}</h3>
+    <div class="notes-list" id="notes-list"></div>
+    <div class="note-add">
+      <input type="text" id="note-input" placeholder="${t('notes.placeholder')}">
+      <button class="btn btn-ghost" id="add-note-btn" type="button">${t('btn.addNote')}</button>
+    </div>
+    <button class="btn btn-ghost" id="remind-btn" type="button" style="width:100%;">${t('btn.remindMe')}</button>
+  `;
+
+  renderNotes(client);
+
+  document.getElementById('detail-modal-close').addEventListener('click', closeDetailModal);
+  backdrop.addEventListener('click', function backdropClose(e) {
+    if (e.target === backdrop) {
+      closeDetailModal();
+      backdrop.removeEventListener('click', backdropClose);
+    }
+  });
+
+  document.getElementById('call-toggle-btn').addEventListener('click', () => toggleCall(client.id));
+
+  document.getElementById('add-note-btn').addEventListener('click', () => addNote(client.id));
+  document.getElementById('note-input').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') addNote(client.id);
+  });
+
+  document.getElementById('remind-btn').addEventListener('click', () => {
+    showToast(t('toast.reminderSet'));
+    setTimeout(() => showToast(t('toast.followUp', { name: client.name })), 60000);
+  });
+
+  backdrop.classList.add('open');
+}
+
+function closeDetailModal() {
+  if (callState.interval) {
+    logCallNote(callState.clientId, formatMMSS(callState.seconds));
+  }
+  resetCallState();
+  document.getElementById('detail-modal-backdrop').classList.remove('open');
+}
+
+function renderNotes(client) {
+  const list = document.getElementById('notes-list');
+  if (!client.notes || client.notes.length === 0) {
+    list.innerHTML = `<div class="note-empty">${t('notes.empty')}</div>`;
+    return;
+  }
+  const sorted = client.notes.slice().sort((a, b) => new Date(a.date) - new Date(b.date));
+  list.innerHTML = sorted.map(
+    (n) => `<div class="note-item">${escapeHtml(n.text)}<span class="ndate">${escapeHtml(n.date)}</span></div>`
+  ).join('');
+}
+
+function addNote(clientId) {
+  const input = document.getElementById('note-input');
+  const text = input.value.trim();
+  if (!text) return;
+
+  const client = allClients.find((c) => String(c.id) === String(clientId));
+  if (!client) return;
+
+  client.notes = client.notes || [];
+  client.notes.push({ text, date: new Date().toLocaleString() });
+  saveClients(allClients);
+
+  input.value = '';
+  renderNotes(client);
+}
+
+/* ---------------- Init ---------------- */
+
+window.addEventListener('langchange', () => {
+  if (allClients.length) renderClientList();
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+  wireToolbar();
+  wireAddModal();
+  wireKeyboardShortcuts();
+  initClientsPage();
+});
