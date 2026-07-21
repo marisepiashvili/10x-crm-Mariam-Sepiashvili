@@ -58,10 +58,21 @@
   <div class="modal-backdrop" id="add-modal-backdrop">
     <div class="modal">
       <div class="modal-head">
-        <h3 data-i18n="modal.addClient.title">Add Client</h3>
+        <h3 id="add-modal-title" data-i18n="modal.addClient.title">Add Client</h3>
         <button class="modal-close" id="add-modal-close" type="button">&times;</button>
       </div>
       <form id="add-client-form" novalidate>
+        <div class="field" id="photo-field">
+          <label data-i18n="field.photo">Photo</label>
+          <div class="avatar-upload-row">
+            <img class="avatar-preview" id="avatar-preview" alt="">
+            <div class="upload-control">
+              <label class="btn btn-ghost upload-btn" for="clientPhoto" style="width:auto;" data-i18n="btn.uploadPhoto">Upload Photo</label>
+              <input type="file" accept="image/*" id="clientPhoto" class="visually-hidden-file">
+              <span class="upload-filename" id="upload-filename" data-i18n="field.noFileChosen">No file chosen</span>
+            </div>
+          </div>
+        </div>
         <div class="field" id="name-field">
           <label for="name" data-i18n="field.name">Name</label>
           <input type="text" id="name" name="name">
@@ -96,7 +107,7 @@
             <option value="Lost" data-i18n="status.lost">Lost</option>
           </select>
         </div>
-        <button type="submit" class="btn btn-primary" data-i18n="btn.addClientSubmit">Add Client</button>
+        <button type="submit" class="btn btn-primary" id="add-client-submit-btn" data-i18n="btn.addClientSubmit">Add Client</button>
       </form>
     </div>
   </div>
