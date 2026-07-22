@@ -49,7 +49,7 @@ This is a static site — no build step and no backend.
 
 ## Live Demo
 
-`<add your Vercel or Netlify URL here after deploying>`
+https://10x-crm-mariam-sepiashvili.vercel.app/
 
 ## Test Account
 
