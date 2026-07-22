@@ -324,7 +324,7 @@ function buildSidebar(activePage) {
   const user = getCurrentUser();
   const userCardHtml = user
     ? '<a class="sidebar-user" href="profile.html">' +
-        '<span class="sidebar-user-avatar">' + escapeHtml(initials(user.fullName)) + '</span>' +
+        '<img class="sidebar-user-avatar" src="' + escapeHtml(user.image || initialsAvatarDataUrl(user.fullName)) + '" alt="">' +
         '<span class="sidebar-user-info">' +
           '<span class="sidebar-user-name">' + escapeHtml(user.fullName) + '</span>' +
           '<span class="sidebar-user-email">' + escapeHtml(user.email) + '</span>' +
@@ -422,6 +422,17 @@ function escapeHtml(str) {
   const div = document.createElement('div');
   div.textContent = str == null ? '' : str;
   return div.innerHTML;
+}
+
+// Shared by clients.js and profile.js: a colored circle/square with the
+// person's initials, used as the avatar fallback whenever no photo is set.
+function initialsAvatarDataUrl(name) {
+  const label = initials(name || '') || '?';
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128">
+    <rect width="128" height="128" rx="64" fill="#8B5CFF"/>
+    <text x="64" y="64" font-family="Arial, sans-serif" font-size="52" font-weight="700" fill="#ffffff" text-anchor="middle" dominant-baseline="central">${escapeHtml(label)}</text>
+  </svg>`;
+  return 'data:image/svg+xml,' + encodeURIComponent(svg);
 }
 
 /* ---------------- Call-note helpers (shared by clients.js / dashboard.js) ----------------

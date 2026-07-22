@@ -2,11 +2,19 @@
  * profile.js — P5
  */
 
+let pendingPhotoDataUrl = null;
+
+function updateAvatarPreview(user) {
+  const src = pendingPhotoDataUrl || (user && user.image) || initialsAvatarDataUrl(user ? user.fullName : '');
+  document.getElementById('profile-avatar').src = src;
+  document.getElementById('avatar-preview').src = src;
+}
+
 function renderProfileInfo() {
   const user = getCurrentUser();
   if (!user) return;
 
-  document.getElementById('profile-initials').textContent = initials(user.fullName);
+  updateAvatarPreview(user);
   document.getElementById('profile-name').textContent = user.fullName;
   document.getElementById('profile-meta').textContent = t('profile.meta', {
     email: user.email,
@@ -15,7 +23,27 @@ function renderProfileInfo() {
   });
 
   document.getElementById('fullName').value = user.fullName;
+  document.getElementById('phone').value = user.phone || '';
   document.getElementById('company').value = user.company || '';
+}
+
+function wireProfilePhotoUpload() {
+  document.getElementById('profilePhoto').addEventListener('change', (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) {
+      pendingPhotoDataUrl = null;
+      updateAvatarPreview(getCurrentUser());
+      document.getElementById('upload-filename').textContent = t('field.noFileChosen');
+      return;
+    }
+    document.getElementById('upload-filename').textContent = file.name;
+    const reader = new FileReader();
+    reader.onload = () => {
+      pendingPhotoDataUrl = reader.result;
+      document.getElementById('avatar-preview').src = pendingPhotoDataUrl;
+    };
+    reader.readAsDataURL(file);
+  });
 }
 
 function wireProfileForm() {
@@ -24,13 +52,24 @@ function wireProfileForm() {
     e.preventDefault();
 
     const fullName = document.getElementById('fullName').value;
+    const phone = document.getElementById('phone').value;
     const company = document.getElementById('company').value;
     setFieldError('fullName', '');
+    setFieldError('phone', '');
+
+    let hasError = false;
 
     if (fullName.trim().length < 3) {
       setFieldError('fullName', t('error.fullNameShort'));
-      return;
+      hasError = true;
     }
+
+    if (phone.trim() !== '' && phone.trim().length < 6) {
+      setFieldError('phone', t('validation.phoneShort'));
+      hasError = true;
+    }
+
+    if (hasError) return;
 
     const users = getUsers();
     const session = getSession();
@@ -38,14 +77,20 @@ function wireProfileForm() {
     if (idx === -1) return;
 
     users[idx].fullName = fullName.trim();
+    users[idx].phone = phone.trim();
     users[idx].company = company.trim();
+    if (pendingPhotoDataUrl) users[idx].image = pendingPhotoDataUrl;
     saveUsers(users);
 
+    pendingPhotoDataUrl = null;
+    document.getElementById('upload-filename').textContent = t('field.noFileChosen');
     renderProfileInfo();
+    wireAppShell();
     showToast(t('toast.profileUpdated'));
   });
 
   document.getElementById('fullName').addEventListener('input', () => setFieldError('fullName', ''));
+  document.getElementById('phone').addEventListener('input', () => setFieldError('phone', ''));
 }
 
 function wirePasswordForm() {
@@ -120,6 +165,7 @@ window.addEventListener('langchange', renderProfileInfo);
 document.addEventListener('DOMContentLoaded', () => {
   renderProfileInfo();
   wireProfileForm();
+  wireProfilePhotoUpload();
   wirePasswordForm();
   wireResetData();
 });

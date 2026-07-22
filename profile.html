@@ -20,7 +20,7 @@
       </div>
 
       <div class="profile-head">
-        <div class="profile-avatar" id="profile-initials">--</div>
+        <img class="profile-avatar" id="profile-avatar" alt="">
         <div class="who">
           <div class="name" id="profile-name">—</div>
           <div class="meta" id="profile-meta">—</div>
@@ -31,10 +31,26 @@
         <div class="card">
           <h2 data-i18n="card.editProfile">Edit Profile</h2>
           <form id="profile-form" novalidate>
+            <div class="field" id="photo-field">
+              <label data-i18n="field.photo">Photo</label>
+              <div class="avatar-upload-row">
+                <img class="avatar-preview" id="avatar-preview" alt="">
+                <div class="upload-control">
+                  <label class="btn btn-ghost upload-btn" for="profilePhoto" style="width:auto;" data-i18n="btn.uploadPhoto">Upload Photo</label>
+                  <input type="file" accept="image/*" id="profilePhoto" class="visually-hidden-file">
+                  <span class="upload-filename" id="upload-filename" data-i18n="field.noFileChosen">No file chosen</span>
+                </div>
+              </div>
+            </div>
             <div class="field" id="fullName-field">
               <label for="fullName" data-i18n="field.fullName">Full Name</label>
               <input type="text" id="fullName" name="fullName">
               <div class="field-error" id="fullName-error"></div>
+            </div>
+            <div class="field" id="phone-field">
+              <label for="phone" data-i18n="field.phone">Phone</label>
+              <input type="text" id="phone" name="phone">
+              <div class="field-error" id="phone-error"></div>
             </div>
             <div class="field" id="company-field">
               <label for="company" data-i18n="field.company">Company</label>

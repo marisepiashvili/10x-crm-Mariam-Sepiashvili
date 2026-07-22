@@ -56,26 +56,28 @@
         </div>
       </div>
 
-      <div class="dash-grid mt-16">
-        <div class="card">
-          <h2 data-i18n="card.topDeals">Top Deals</h2>
-          <div class="recent-list" id="top-deals"></div>
+      <div class="card mt-16">
+        <div class="chip-row chip-row-center" id="activity-tabs">
+          <button class="chip active" data-tab="notes" type="button" data-i18n="notes.title">Notes</button>
+          <button class="chip" data-tab="calls" type="button" data-i18n="card.activityCalls">Calls</button>
+          <button class="chip" data-tab="deals" type="button" data-i18n="card.topDeals">Top Deals</button>
         </div>
-
-        <div class="card">
-          <h2 data-i18n="card.recentActivity">Recent Activity</h2>
-          <h3 class="activity-subhead notes-subhead" data-i18n="notes.title">Notes</h3>
-          <div class="recent-list" id="activity-notes"></div>
-          <h3 class="activity-subhead calls-subhead" data-i18n="card.activityCalls">Calls</h3>
-          <div class="recent-list" id="activity-calls"></div>
-        </div>
+        <div class="recent-list tab-panel mt-16" id="activity-notes" data-tab-panel="notes"></div>
+        <div class="recent-list tab-panel mt-16 hidden" id="activity-calls" data-tab-panel="calls"></div>
+        <div class="recent-list tab-panel mt-16 hidden" id="top-deals" data-tab-panel="deals"></div>
       </div>
     </main>
+  </div>
+
+  <!-- Client details modal (shared with clients.html) -->
+  <div class="modal-backdrop" id="detail-modal-backdrop">
+    <div class="modal" id="detail-modal-content"></div>
   </div>
 
   <script src="js/i18n.js"></script>
   <script src="js/guard.js"></script>
   <script src="js/data.js"></script>
+  <script src="js/client-detail.js"></script>
   <script src="js/dashboard.js"></script>
 </body>
 </html>

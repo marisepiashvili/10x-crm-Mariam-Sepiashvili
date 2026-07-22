@@ -8,6 +8,18 @@
 
 const API_BASE = 'https://dummyjson.com';
 
+const STATUS_ORDER = ['Lead', 'Contacted', 'Won', 'Lost'];
+const STATUS_LABEL_KEY = {
+  Lead: 'status.lead',
+  Contacted: 'status.contacted',
+  Won: 'status.won',
+  Lost: 'status.lost',
+};
+
+function statusBadgeClass(status) {
+  return 'st-' + status.toLowerCase();
+}
+
 function getClients() {
   try {
     const raw = localStorage.getItem(STORAGE_KEYS.clients);
@@ -80,6 +92,8 @@ function getVisibleClients(clients, { status = 'All', search = '', sort = 'newes
     list.sort((a, b) => a.name.localeCompare(b.name));
   } else if (sort === 'value') {
     list.sort((a, b) => b.dealValue - a.dealValue);
+  } else if (sort === 'valueAsc') {
+    list.sort((a, b) => a.dealValue - b.dealValue);
   }
 
   return list;

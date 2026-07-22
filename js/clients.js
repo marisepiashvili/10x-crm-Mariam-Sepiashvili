@@ -13,14 +13,6 @@ let selectedIds = new Set();
 let editingClient = null;
 let pendingPhotoDataUrl = null;
 
-const STATUS_ORDER = ['Lead', 'Contacted', 'Won', 'Lost'];
-const STATUS_LABEL_KEY = {
-  Lead: 'status.lead',
-  Contacted: 'status.contacted',
-  Won: 'status.won',
-  Lost: 'status.lost',
-};
-
 // null = no active server search, show allClients; array = server search results
 let searchResults = null;
 let searchTimer = null;
@@ -37,6 +29,7 @@ async function initClientsPage() {
     const { clients } = await loadClients();
     allClients = clients;
     renderClientList();
+    openClientFromQueryParam();
   } catch (err) {
     area.innerHTML = `
       <div class="state-msg">
@@ -47,8 +40,14 @@ async function initClientsPage() {
   }
 }
 
-function statusBadgeClass(status) {
-  return 'st-' + status.toLowerCase();
+// Lets the dashboard's "Edit" button (on a page with no edit form of its own)
+// deep-link here as clients.html?edit=<id> and land straight in the edit modal.
+function openClientFromQueryParam() {
+  const editId = new URLSearchParams(window.location.search).get('edit');
+  if (!editId) return;
+  const client = allClients.find((c) => String(c.id) === String(editId));
+  if (client) openClientModal(client);
+  history.replaceState(null, '', window.location.pathname);
 }
 
 function getListSource() {
@@ -135,7 +134,7 @@ function renderGridView(visible) {
     // Card click -> details modal, but not when clicking the interactive controls
     card.addEventListener('click', (e) => {
       if (e.target.closest('select') || e.target.closest('button') || e.target.closest('input')) return;
-      openDetailModal(client.id);
+      openClientDetail(client.id);
     });
 
     grid.appendChild(card);
@@ -308,7 +307,7 @@ function renderKanbanView(visible) {
       card.classList.add('dragging');
     });
     card.addEventListener('dragend', () => card.classList.remove('dragging'));
-    card.addEventListener('click', () => openDetailModal(card.dataset.id));
+    card.addEventListener('click', () => openClientDetail(card.dataset.id));
   });
 
   board.querySelectorAll('.kanban-column').forEach((col) => {
@@ -504,15 +503,6 @@ async function onDeleteClient(id) {
 
 /* ---------------- Add / Edit Client modal (P4.4) ---------------- */
 
-function initialsAvatarDataUrl(name) {
-  const label = initials(name || '') || '?';
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128">
-    <rect width="128" height="128" rx="64" fill="#8B5CFF"/>
-    <text x="64" y="64" font-family="Arial, sans-serif" font-size="52" font-weight="700" fill="#ffffff" text-anchor="middle" dominant-baseline="central">${escapeHtml(label)}</text>
-  </svg>`;
-  return 'data:image/svg+xml,' + encodeURIComponent(svg);
-}
-
 function updateAvatarPreview(client) {
   const img = document.getElementById('avatar-preview');
   if (pendingPhotoDataUrl) {
@@ -551,6 +541,13 @@ function openClientModal(client) {
 
 function openAddModal() {
   openClientModal(null);
+}
+
+function openClientDetail(id) {
+  openDetailModal(id, allClients, {
+    onEdit: (client) => openClientModal(client),
+    onChange: () => renderClientList(),
+  });
 }
 
 function closeAddModal() {
@@ -698,227 +695,6 @@ function wireAddModal() {
   document.getElementById('name').addEventListener('input', () => {
     if (!editingClient && !pendingPhotoDataUrl) updateAvatarPreview(null);
   });
-}
-
-/* ---------------- Call timer (Start/End Call stopwatch) ---------------- */
-
-let callState = { interval: null, seconds: 0, clientId: null };
-
-function formatMMSS(totalSeconds) {
-  const m = Math.floor(totalSeconds / 60);
-  const s = totalSeconds % 60;
-  return String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
-}
-
-function updateCallDisplay() {
-  const el = document.getElementById('call-timer-display');
-  if (el) el.textContent = formatMMSS(callState.seconds);
-}
-
-function resetCallState() {
-  if (callState.interval) clearInterval(callState.interval);
-  callState = { interval: null, seconds: 0, clientId: null };
-}
-
-function logCallNote(clientId, duration) {
-  const client = allClients.find((c) => String(c.id) === String(clientId));
-  if (!client) return;
-  client.notes = client.notes || [];
-  client.notes.push({ text: t('note.callDuration', { duration }), date: new Date().toLocaleString(), type: 'call', duration });
-  saveClients(allClients);
-  if (document.getElementById('detail-modal-backdrop').classList.contains('open')) {
-    renderNotes(client);
-  }
-}
-
-function toggleCall(clientId) {
-  const btn = document.getElementById('call-toggle-btn');
-  const wrap = document.getElementById('call-timer');
-
-  if (callState.interval) {
-    clearInterval(callState.interval);
-    const duration = formatMMSS(callState.seconds);
-    logCallNote(clientId, duration);
-    callState = { interval: null, seconds: 0, clientId: null };
-    updateCallDisplay();
-    if (btn) btn.textContent = t('btn.startCall');
-    if (wrap) wrap.classList.remove('active');
-  } else {
-    callState.clientId = clientId;
-    callState.seconds = 0;
-    updateCallDisplay();
-    callState.interval = setInterval(() => {
-      callState.seconds++;
-      updateCallDisplay();
-    }, 1000);
-    if (btn) btn.textContent = t('btn.endCall');
-    if (wrap) wrap.classList.add('active');
-  }
-}
-
-/* ---------------- Details modal (P4.8) ---------------- */
-
-function openDetailModal(id) {
-  const client = allClients.find((c) => String(c.id) === String(id));
-  if (!client) return;
-
-  resetCallState();
-
-  const backdrop = document.getElementById('detail-modal-backdrop');
-  const content = document.getElementById('detail-modal-content');
-
-  content.innerHTML = `
-    <div class="modal-head">
-      <h3>${t('modal.clientDetails.title')}</h3>
-      <div style="display:flex; align-items:center; gap:8px;">
-        <button class="btn btn-ghost" id="detail-edit-btn" type="button" style="width:auto; padding:6px 14px; font-size:13px;">${t('btn.edit')}</button>
-        <button class="modal-close" id="detail-modal-close" type="button">&times;</button>
-      </div>
-    </div>
-    <div class="detail-top">
-      <img src="${client.image}" alt="">
-      <div>
-        <div class="client-name">${escapeHtml(client.name)}</div>
-        <div class="detail-meta">${t('detail.clientSince', { date: new Date(client.createdAt).toLocaleDateString() })}</div>
-      </div>
-    </div>
-    <div class="detail-grid">
-      <div><span>${t('detail.company')}</span>${escapeHtml(client.company || '—')}</div>
-      <div><span>${t('detail.status')}</span>
-        <select class="status-select ${statusBadgeClass(client.status)}" id="detail-status-select">
-          ${STATUS_ORDER.map(
-            (s) => `<option value="${s}" ${s === client.status ? 'selected' : ''}>${t(STATUS_LABEL_KEY[s])}</option>`
-          ).join('')}
-        </select>
-      </div>
-      <div><span>${t('detail.email')}</span>${escapeHtml(client.email)}</div>
-      <div><span>${t('detail.phone')}</span>${escapeHtml(client.phone || '—')}</div>
-      <div style="grid-column:1 / -1;"><span>${t('detail.dealValue')}</span>${formatCurrency(client.dealValue)}</div>
-    </div>
-    <div class="call-timer" id="call-timer">
-      <span class="call-timer-display" id="call-timer-display">00:00</span>
-      <button class="btn btn-ghost" id="call-toggle-btn" type="button">${t('btn.startCall')}</button>
-    </div>
-    <h3 style="font-family:var(--font-display); font-size:15px; margin:0 0 8px;">${t('notes.title')}</h3>
-    <div class="notes-list" id="notes-list"></div>
-    <div class="note-add">
-      <input type="text" id="note-input" placeholder="${t('notes.placeholder')}">
-      <button class="btn btn-ghost" id="add-note-btn" type="button">${t('btn.addNote')}</button>
-    </div>
-    <div class="reminder-row">
-      <select class="sort-select" id="reminder-select">
-        <option value="1">${t('reminder.min1')}</option>
-        <option value="5">${t('reminder.min5')}</option>
-        <option value="15">${t('reminder.min15')}</option>
-        <option value="30">${t('reminder.min30')}</option>
-        <option value="60">${t('reminder.hour1')}</option>
-        <option value="120">${t('reminder.hour2')}</option>
-        <option value="180">${t('reminder.hour3')}</option>
-        <option value="360">${t('reminder.hour6')}</option>
-        <option value="720">${t('reminder.hour12')}</option>
-      </select>
-      <button class="btn btn-ghost" id="remind-btn" type="button">${t('btn.setReminder')}</button>
-    </div>
-  `;
-
-  renderNotes(client);
-
-  document.getElementById('detail-modal-close').addEventListener('click', closeDetailModal);
-  document.getElementById('detail-edit-btn').addEventListener('click', () => {
-    closeDetailModal();
-    openClientModal(client);
-  });
-  backdrop.addEventListener('click', function backdropClose(e) {
-    if (e.target === backdrop) {
-      closeDetailModal();
-      backdrop.removeEventListener('click', backdropClose);
-    }
-  });
-
-  document.getElementById('detail-status-select').addEventListener('change', (e) => {
-    onStatusChange(client.id, e.target.value);
-    e.target.className = 'status-select ' + statusBadgeClass(e.target.value);
-  });
-
-  document.getElementById('call-toggle-btn').addEventListener('click', () => toggleCall(client.id));
-
-  document.getElementById('add-note-btn').addEventListener('click', () => addNote(client.id));
-  document.getElementById('note-input').addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') addNote(client.id);
-  });
-
-  document.getElementById('remind-btn').addEventListener('click', () => {
-    const minutes = parseInt(document.getElementById('reminder-select').value, 10);
-    const noteText = document.getElementById('note-input').value.trim();
-    const reminderText = noteText ? `${client.name} — ${noteText}` : client.name;
-    showToast(t('toast.reminderSet'));
-    setTimeout(() => {
-      showTopToast(t('toast.reminderFired', { text: reminderText }));
-    }, minutes * 60000);
-  });
-
-  backdrop.classList.add('open');
-}
-
-function closeDetailModal() {
-  if (callState.interval) {
-    logCallNote(callState.clientId, formatMMSS(callState.seconds));
-  }
-  resetCallState();
-  document.getElementById('detail-modal-backdrop').classList.remove('open');
-}
-
-async function renderNotes(client) {
-  const list = document.getElementById('notes-list');
-  if (!client.notes || client.notes.length === 0) {
-    list.innerHTML = `<div class="note-empty">${t('notes.empty')}</div>`;
-    return;
-  }
-  const sorted = client.notes.slice().sort((a, b) => new Date(a.date) - new Date(b.date));
-  const rows = await Promise.all(sorted.map(async (n) => {
-    const text = await getTranslatedNoteText(n);
-    return `
-      <div class="note-item${n.important ? ' is-important' : ''}">
-        <div class="note-body">${escapeHtml(text)}<span class="ndate">${escapeHtml(n.date)}</span></div>
-        <div class="note-actions">
-          <button class="note-star-btn${n.important ? ' active' : ''}" type="button" title="${t('btn.markImportant')}">★</button>
-          <button class="note-delete-btn" type="button" title="${t('btn.deleteNote')}">&times;</button>
-        </div>
-      </div>`;
-  }));
-  list.innerHTML = rows.join('');
-
-  // sorted[i] and the rendered .note-item at the same index are the exact
-  // same object references as client.notes -- no id field needed to find
-  // which one to act on.
-  list.querySelectorAll('.note-star-btn').forEach((btn, i) => {
-    btn.addEventListener('click', () => {
-      toggleNoteImportant(allClients, sorted[i]);
-      renderNotes(client);
-    });
-  });
-  list.querySelectorAll('.note-delete-btn').forEach((btn, i) => {
-    btn.addEventListener('click', () => {
-      deleteClientNote(allClients, client, sorted[i]);
-      renderNotes(client);
-    });
-  });
-}
-
-function addNote(clientId) {
-  const input = document.getElementById('note-input');
-  const text = input.value.trim();
-  if (!text) return;
-
-  const client = allClients.find((c) => String(c.id) === String(clientId));
-  if (!client) return;
-
-  client.notes = client.notes || [];
-  client.notes.push({ text, date: new Date().toLocaleString(), type: 'note', lang: getLang() });
-  saveClients(allClients);
-
-  input.value = '';
-  renderNotes(client);
 }
 
 /* ---------------- Init ---------------- */

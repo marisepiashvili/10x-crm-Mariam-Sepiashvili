@@ -3,18 +3,11 @@
  * Greeting + live clock, 4 stat cards, Pipeline Overview, Recent Clients (top 5).
  */
 
-const STATUS_ORDER = ['Lead', 'Contacted', 'Won', 'Lost'];
 const STATUS_COLOR_VAR = {
   Lead: 'var(--peach)',
   Contacted: 'var(--sky)',
   Won: 'var(--mint)',
   Lost: 'var(--rose)',
-};
-const STATUS_LABEL_KEY = {
-  Lead: 'status.lead',
-  Contacted: 'status.contacted',
-  Won: 'status.won',
-  Lost: 'status.lost',
 };
 
 let dashboardClients = [];
@@ -168,7 +161,7 @@ function renderRecent(clients) {
   }
 
   container.innerHTML = recent.map((c) => `
-    <div class="recent-row">
+    <div class="recent-row client-row" data-id="${c.id}">
       <img class="avatar" src="${c.image}" alt="">
       <div class="who">
         <div class="n">${escapeHtml(c.name)}</div>
@@ -178,6 +171,8 @@ function renderRecent(clients) {
       <span class="date">${new Date(c.createdAt).toLocaleDateString()}</span>
     </div>
   `).join('');
+
+  wireClientRowClicks(container);
 }
 
 function renderTopDeals(clients) {
@@ -187,7 +182,7 @@ function renderTopDeals(clients) {
   const top = clients
     .filter((c) => c.status === 'Won')
     .sort((a, b) => b.dealValue - a.dealValue)
-    .slice(0, 5);
+    .slice(0, 10);
 
   if (top.length === 0) {
     container.innerHTML = `<p class="state-msg">${t('state.noClientsYet')}</p>`;
@@ -195,7 +190,7 @@ function renderTopDeals(clients) {
   }
 
   container.innerHTML = top.map((c, i) => `
-    <div class="recent-row">
+    <div class="recent-row client-row" data-id="${c.id}">
       <span class="rank-badge rank-${i + 1}">${i + 1}</span>
       <img class="avatar" src="${c.image}" alt="">
       <div class="who">
@@ -206,6 +201,29 @@ function renderTopDeals(clients) {
       <span class="amount">${formatCurrency(c.dealValue)}</span>
     </div>
   `).join('');
+
+  wireClientRowClicks(container);
+}
+
+function wireClientRowClicks(container) {
+  container.querySelectorAll('.client-row').forEach((row) => {
+    row.addEventListener('click', () => openClientDetail(row.dataset.id));
+  });
+}
+
+function refreshDashboardViews() {
+  renderStats(dashboardClients);
+  renderPipeline(dashboardClients);
+  renderRecent(dashboardClients);
+  renderTopDeals(dashboardClients);
+  renderActivity(dashboardClients);
+}
+
+function openClientDetail(id) {
+  openDetailModal(id, dashboardClients, {
+    onEdit: (client) => { window.location.href = 'clients.html?edit=' + client.id; },
+    onChange: refreshDashboardViews,
+  });
 }
 
 async function renderActivityList(container, items, emptyMessage, iconClass, iconGlyph, useBubble) {
@@ -229,11 +247,10 @@ async function renderActivityList(container, items, emptyMessage, iconClass, ico
             : `<div class="n">${escapeHtml(client.name)}</div><div class="c">${escapeHtml(text)}</div>`}
         </div>
         <span class="date">${escapeHtml(date)}</span>
-        ${useBubble ? `
         <div class="note-actions">
-          <button class="note-star-btn${important ? ' active' : ''}" type="button" title="${t('btn.markImportant')}">★</button>
+          ${useBubble ? `<button class="note-star-btn${important ? ' active' : ''}" type="button" title="${t('btn.markImportant')}">★</button>` : ''}
           <button class="note-delete-btn" type="button" title="${t('btn.deleteNote')}">&times;</button>
-        </div>` : ''}
+        </div>
       </div>`;
   }));
   container.innerHTML = rows.join('');
@@ -245,13 +262,13 @@ async function renderActivityList(container, items, emptyMessage, iconClass, ico
         renderActivity(dashboardClients);
       });
     });
-    container.querySelectorAll('.note-delete-btn').forEach((btn, i) => {
-      btn.addEventListener('click', () => {
-        deleteClientNote(dashboardClients, items[i].client, items[i].note);
-        renderActivity(dashboardClients);
-      });
-    });
   }
+  container.querySelectorAll('.note-delete-btn').forEach((btn, i) => {
+    btn.addEventListener('click', () => {
+      deleteClientNote(dashboardClients, items[i].client, items[i].note);
+      renderActivity(dashboardClients);
+    });
+  });
 }
 
 async function renderActivity(clients) {
@@ -275,10 +292,24 @@ async function renderActivity(clients) {
   await renderActivityList(document.getElementById('activity-calls'), calls.slice(0, 20), t('state.noCallsYet'), 'activity-icon-call', '📞', false);
 }
 
+function wireActivityTabs() {
+  const tabs = document.querySelectorAll('#activity-tabs .chip');
+  tabs.forEach((tab) => {
+    tab.addEventListener('click', () => {
+      tabs.forEach((t) => t.classList.remove('active'));
+      tab.classList.add('active');
+      document.querySelectorAll('.tab-panel').forEach((panel) => {
+        panel.classList.toggle('hidden', panel.dataset.tabPanel !== tab.dataset.tab);
+      });
+    });
+  });
+}
+
 async function initDashboard() {
   renderGreeting();
   tickClock();
   setInterval(tickClock, 1000);
+  wireActivityTabs();
 
   try {
     const { clients } = await loadClients();
