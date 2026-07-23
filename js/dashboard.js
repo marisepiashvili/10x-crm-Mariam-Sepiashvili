@@ -238,6 +238,7 @@ async function renderActivityList(container, items, emptyMessage, iconClass, ico
   const rows = await Promise.all(items.map(async ({ note, date, client }) => {
     const text = await getTranslatedNoteText(note);
     const important = useBubble && note.important;
+    const [datePart, timePart] = date.split(', ');
     return `
       <div class="recent-row${important ? ' is-important' : ''}">
         <span class="activity-icon ${iconClass}">${iconGlyph}</span>
@@ -246,7 +247,9 @@ async function renderActivityList(container, items, emptyMessage, iconClass, ico
             ? `<div class="c">${important ? '⭐ ' : ''}${escapeHtml(client.name)}</div><div class="note-bubble">${escapeHtml(text)}</div>`
             : `<div class="n">${escapeHtml(client.name)}</div><div class="c">${escapeHtml(text)}</div>`}
         </div>
-        <span class="date">${escapeHtml(date)}</span>
+        <span class="date">
+          <span class="date-day">${escapeHtml(datePart || date)}</span>${timePart ? `<span class="date-time">${escapeHtml(timePart)}</span>` : ''}
+        </span>
         <div class="note-actions">
           ${useBubble ? `<button class="note-star-btn${important ? ' active' : ''}" type="button" title="${t('btn.markImportant')}">★</button>` : ''}
           <button class="note-delete-btn" type="button" title="${t('btn.deleteNote')}">&times;</button>
