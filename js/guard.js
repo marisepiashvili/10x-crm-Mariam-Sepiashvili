@@ -31,6 +31,11 @@ function getSession() {
   }
 }
 
+function clientsStorageKey() {
+  const session = getSession();
+  return session ? `${STORAGE_KEYS.clients}_${session.userId}` : STORAGE_KEYS.clients;
+}
+
 function runAuthGuard() {
   const page = getCurrentPage();
   const session = getSession();
@@ -51,6 +56,7 @@ runAuthGuard();
 
 const ICON_SUN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>';
 const ICON_MOON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
+const ICON_LOGOUT = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>';
 
 /* ---------------- Theme ---------------- */
 
@@ -122,8 +128,8 @@ function refreshSidebarLabels() {
     a.textContent = t(labelKey);
     if (dot) a.prepend(dot);
   });
-  const logoutBtn = document.querySelector('[data-logout]');
-  if (logoutBtn) logoutBtn.textContent = t('sidebar.logout');
+  const logoutLabel = document.querySelector('[data-logout] .logout-label');
+  if (logoutLabel) logoutLabel.textContent = t('sidebar.logout');
 }
 
 function toggleLang() {
@@ -340,20 +346,23 @@ function buildSidebar(activePage) {
       '<div class="switch-row">' +
         '<button class="switch-toggle" data-theme-toggle type="button" role="switch">' +
           '<span class="switch-track">' +
-            '<span class="switch-icon switch-icon-left">' + ICON_SUN + '</span>' +
-            '<span class="switch-icon switch-icon-right">' + ICON_MOON + '</span>' +
+            '<span class="switch-icon switch-icon-left">' + ICON_MOON + '</span>' +
+            '<span class="switch-icon switch-icon-right">' + ICON_SUN + '</span>' +
             '<span class="switch-knob"></span>' +
           '</span>' +
         '</button>' +
         '<button class="switch-toggle" data-lang-toggle type="button" role="switch">' +
           '<span class="switch-track">' +
-            '<span class="switch-icon switch-icon-left switch-text">EN</span>' +
-            '<span class="switch-icon switch-icon-right switch-text">ქა</span>' +
+            '<span class="switch-icon switch-icon-left switch-text">ka</span>' +
+            '<span class="switch-icon switch-icon-right switch-text">en</span>' +
             '<span class="switch-knob"></span>' +
           '</span>' +
         '</button>' +
       '</div>' +
-      '<button class="logout-btn" data-logout type="button">' + t('sidebar.logout') + '</button>' +
+      '<button class="logout-btn" data-logout type="button">' +
+        '<span class="logout-icon">' + ICON_LOGOUT + '</span>' +
+        '<span class="logout-label">' + t('sidebar.logout') + '</span>' +
+      '</button>' +
     '</div>';
 }
 

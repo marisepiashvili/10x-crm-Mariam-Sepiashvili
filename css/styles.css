@@ -470,7 +470,8 @@ select {
 .logout-btn {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
+  gap: 10px;
   padding: 10px 14px;
   border-radius: var(--radius-sm);
   border: none;
@@ -485,6 +486,8 @@ select {
 .logout-btn:active { transform: translateY(1px) scale(0.97); }
 
 .logout-btn { color: var(--rose); }
+.logout-icon { display: flex; flex: none; width: 16px; height: 16px; }
+.logout-icon svg { width: 100%; height: 100%; }
 
 .switch-row { display: flex; flex-direction: row; gap: 8px; }
 
@@ -1183,9 +1186,24 @@ select {
 .note-empty { color: var(--text-faint); font-size: 13.5px; font-weight: 500; padding: 10px 0; }
 
 .note-add { display: flex; gap: 8px; margin-bottom: 14px; }
-.reminder-row { display: flex; gap: 8px; }
-.reminder-row .sort-select { flex: none; }
+.reminder-row { display: flex; gap: 8px; align-items: center; }
 .reminder-row .btn { flex: 1; }
+.stepper {
+  display: flex; align-items: center; gap: 10px; flex: none;
+  background: var(--clay-2); border-radius: var(--radius-pill); padding: 4px;
+  box-shadow: inset 0 2px 4px var(--clay-lo);
+}
+.stepper-btn {
+  width: 28px; height: 28px; flex: none; display: flex; align-items: center; justify-content: center;
+  border: none; border-radius: 50%; background: var(--clay); color: var(--text);
+  font-size: 15px; font-weight: 700; line-height: 1;
+  box-shadow: inset 0 2px 4px var(--clay-hi), inset 0 -3px 6px var(--clay-lo);
+  transition: transform 0.15s var(--squish), color 0.2s var(--ease);
+}
+.stepper-btn:hover { color: var(--accent); }
+.stepper-btn:active { transform: scale(0.9); }
+.stepper-value { min-width: 20px; text-align: center; font-size: 13px; font-weight: 700; color: var(--text); }
+.reminder-unit { color: var(--text-dim); font-size: 13px; font-weight: 600; }
 .note-add input {
   flex: 1; padding: 10px 13px; border-radius: var(--radius-pill);
   border: none; background: var(--clay-2); color: var(--text); font-size: 13px;
@@ -1310,12 +1328,20 @@ select {
 @media (max-width: 900px) {
   .app-shell { grid-template-columns: 1fr; padding: 12px; gap: 12px; }
   .sidebar { position: relative; height: auto; flex-direction: row; align-items: center; flex-wrap: wrap; padding: 16px 12px; top: 0; }
-  .brand { padding: 0; font-size: 12.5px; gap: 4px; flex: none; }
+  /* Row 1: brand on the left, theme/lang/logout controls pinned to the
+     top-right corner via `order` (DOM order stays brand -> nav -> footer
+     so keyboard/tab order is unaffected; only the visual flow is reordered). */
+  .brand { order: 1; padding: 0; font-size: 12.5px; gap: 4px; flex: none; }
   .brand .stamp { width: 24px; height: 24px; font-size: 9px; border-radius: var(--radius-sm); }
-  .nav-links { flex-direction: row; flex-wrap: wrap; gap: 2px; margin-left: 6px; }
-  .nav-link { padding: 6px 8px; gap: 5px; font-size: 12px; }
-  .sidebar-footer { flex-direction: row; flex-basis: 100%; margin-top: 12px; }
+  .sidebar-footer {
+    order: 2; flex: 1; flex-basis: auto; margin-top: 0; padding-top: 0;
+    flex-direction: row; align-items: center; justify-content: flex-end; gap: 8px;
+  }
   .sidebar-user { display: none; }
+  /* Row 2: nav links drop below and center themselves -- flex-basis: 100%
+     forces the wrap regardless of leftover width on row 1. */
+  .nav-links { order: 3; flex-basis: 100%; flex-direction: row; flex-wrap: wrap; justify-content: center; gap: 2px; margin-left: 0; margin-top: 10px; }
+  .nav-link { padding: 6px 8px; gap: 5px; font-size: 12px; }
   /* min-width: 0 keeps .main pinned to its grid track even though overflow
      is visible here -- without it, wide non-wrapping content like the
      kanban board's columns forces this grid item (and the whole page)
@@ -1325,23 +1351,63 @@ select {
   .dash-grid { grid-template-columns: 1fr; }
   .profile-grid { grid-template-columns: 1fr; }
   .kanban-column { flex-basis: 220px; }
-  .page-head-actions .btn { flex: 1; }
+  /* Export stays pinned left, Add Client pinned right -- both size to their
+     own content (flex: none) instead of stretching to share the row. */
+  .page-head-actions { width: 100%; justify-content: space-between; }
+  .page-head-actions .btn { flex: none; width: auto; padding: 9px 16px; font-size: 12.5px; }
+
+  /* Search box gets its own full-width row; the 5 status chips get a
+     second full-width row right below it, shrunk just enough to all fit
+     on one line instead of wrapping. Sort/view controls fall to a 3rd line. */
+  .search-box { flex-basis: 100%; min-width: 0; }
+  .chip-row { flex-basis: 100%; flex-wrap: nowrap; gap: 4px; }
+  .chip { flex: 1; padding: 6px 4px; font-size: 10.5px; white-space: nowrap; }
+
+  /* Bulk-select bar: stack into clean full-width rows instead of wrapping
+     into uneven leftover gaps. `.bulk-actions` becomes `display: contents`
+     so its children act as direct flex items of `.bulk-bar` -- that lets
+     the count sit on the same row as "Select all" (pushed to the right
+     edge via `order` + `margin-left: auto`) while the status dropdown and
+     the two action buttons still fall to their own rows below. */
+  .bulk-bar { flex-direction: row; flex-wrap: wrap; align-items: center; gap: 10px; }
+  .bulk-actions { display: contents; }
+  .bulk-select-all { order: 1; }
+  .bulk-count { order: 2; margin-left: auto; }
+  .bulk-actions .sort-select { order: 3; flex-basis: 100%; width: 100%; }
+  #bulk-delete-btn { order: 4; flex: 1; }
+  #bulk-clear-btn { order: 5; flex: 1; }
 
   /* Compact icon-only theme/language switches: the full sliding pill (both
      icons + knob) is too wide for the row of mobile sidebar controls, so
      each toggle collapses to a single circular button showing just the
      currently-active icon; tapping it still flips that one setting. */
-  .switch-toggle { width: 40px; height: 40px; }
-  .switch-track { height: 40px; padding: 0; justify-content: center; }
+  .switch-toggle { width: 32px; height: 32px; }
+  .switch-track { height: 32px; padding: 0; justify-content: center; }
   .switch-knob { display: none; }
   .switch-icon-left, .switch-icon-right {
     position: static;
     opacity: 1 !important;
     transform: none !important;
   }
-  .switch-icon:not(.switch-text) { width: 18px; height: 18px; }
+  .switch-icon:not(.switch-text) { width: 15px; height: 15px; }
   .switch-toggle[data-state="off"] .switch-icon-right,
   .switch-toggle[data-state="on"] .switch-icon-left {
     display: none;
   }
+
+  /* Logout collapses to the same icon-only circle as the theme/lang
+     toggles so all three controls read as one group in the top-right. */
+  .logout-btn { width: 32px; height: 32px; flex: none; padding: 0; justify-content: center; background: var(--clay-2); }
+  .logout-label { display: none; }
+  .logout-icon { width: 15px; height: 15px; }
+
+  /* Clock collapses from a boxed card into a plain inline line under the
+     page subtitle, matching the surrounding text instead of standing apart. */
+  .clock {
+    display: flex; align-items: baseline; gap: 6px; flex-basis: 100%;
+    background: none; box-shadow: none; padding: 0; margin-top: 2px;
+    text-align: left; font-size: 12.5px;
+  }
+  .clock strong { display: inline; font-size: 12.5px; }
+  .clock strong::after { content: '\00b7'; margin-left: 6px; color: var(--text-faint); font-weight: 400; }
 }

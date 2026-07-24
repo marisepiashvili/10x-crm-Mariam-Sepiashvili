@@ -113,17 +113,12 @@ function openDetailModal(id, clients, { onEdit, onChange } = {}) {
       <button class="btn btn-ghost" id="add-note-btn" type="button">${t('btn.addNote')}</button>
     </div>
     <div class="reminder-row">
-      <select class="sort-select" id="reminder-select">
-        <option value="1">${t('reminder.min1')}</option>
-        <option value="5">${t('reminder.min5')}</option>
-        <option value="15">${t('reminder.min15')}</option>
-        <option value="30">${t('reminder.min30')}</option>
-        <option value="60">${t('reminder.hour1')}</option>
-        <option value="120">${t('reminder.hour2')}</option>
-        <option value="180">${t('reminder.hour3')}</option>
-        <option value="360">${t('reminder.hour6')}</option>
-        <option value="720">${t('reminder.hour12')}</option>
-      </select>
+      <div class="stepper" id="reminder-stepper" data-value="1">
+        <button class="stepper-btn" id="reminder-dec" type="button" aria-label="-">−</button>
+        <span class="stepper-value" id="reminder-value">1</span>
+        <span class="reminder-unit">${t('reminder.minutes')}</span>
+        <button class="stepper-btn" id="reminder-inc" type="button" aria-label="+">+</button>
+      </div>
       <button class="btn btn-ghost" id="remind-btn" type="button">${t('btn.setReminder')}</button>
     </div>
   `;
@@ -158,8 +153,22 @@ function openDetailModal(id, clients, { onEdit, onChange } = {}) {
     if (e.key === 'Enter') addNote(client.id, clients, onChange);
   });
 
+  const reminderStepper = document.getElementById('reminder-stepper');
+  const reminderValueEl = document.getElementById('reminder-value');
+  function setReminderMinutes(minutes) {
+    const clamped = Math.min(60, Math.max(1, minutes));
+    reminderStepper.dataset.value = clamped;
+    reminderValueEl.textContent = clamped;
+  }
+  document.getElementById('reminder-dec').addEventListener('click', () => {
+    setReminderMinutes(parseInt(reminderStepper.dataset.value, 10) - 1);
+  });
+  document.getElementById('reminder-inc').addEventListener('click', () => {
+    setReminderMinutes(parseInt(reminderStepper.dataset.value, 10) + 1);
+  });
+
   document.getElementById('remind-btn').addEventListener('click', () => {
-    const minutes = parseInt(document.getElementById('reminder-select').value, 10);
+    const minutes = parseInt(reminderStepper.dataset.value, 10);
     const noteText = document.getElementById('note-input').value.trim();
     const reminderText = noteText ? `${client.name} — ${noteText}` : client.name;
     showToast(t('toast.reminderSet'));

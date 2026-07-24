@@ -22,7 +22,7 @@ function statusBadgeClass(status) {
 
 function getClients() {
   try {
-    const raw = localStorage.getItem(STORAGE_KEYS.clients);
+    const raw = localStorage.getItem(clientsStorageKey());
     return raw ? JSON.parse(raw) : null;
   } catch {
     return null;
@@ -30,7 +30,7 @@ function getClients() {
 }
 
 function saveClients(list) {
-  localStorage.setItem(STORAGE_KEYS.clients, JSON.stringify(list));
+  localStorage.setItem(clientsStorageKey(), JSON.stringify(list));
 }
 
 function mapApiUserToClient(user) {

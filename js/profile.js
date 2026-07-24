@@ -23,7 +23,6 @@ function renderProfileInfo() {
   });
 
   document.getElementById('fullName').value = user.fullName;
-  document.getElementById('phone').value = user.phone || '';
   document.getElementById('company').value = user.company || '';
 }
 
@@ -52,20 +51,13 @@ function wireProfileForm() {
     e.preventDefault();
 
     const fullName = document.getElementById('fullName').value;
-    const phone = document.getElementById('phone').value;
     const company = document.getElementById('company').value;
     setFieldError('fullName', '');
-    setFieldError('phone', '');
 
     let hasError = false;
 
     if (fullName.trim().length < 3) {
       setFieldError('fullName', t('error.fullNameShort'));
-      hasError = true;
-    }
-
-    if (phone.trim() !== '' && phone.trim().length < 6) {
-      setFieldError('phone', t('validation.phoneShort'));
       hasError = true;
     }
 
@@ -77,7 +69,6 @@ function wireProfileForm() {
     if (idx === -1) return;
 
     users[idx].fullName = fullName.trim();
-    users[idx].phone = phone.trim();
     users[idx].company = company.trim();
     if (pendingPhotoDataUrl) users[idx].image = pendingPhotoDataUrl;
     saveUsers(users);
@@ -90,7 +81,6 @@ function wireProfileForm() {
   });
 
   document.getElementById('fullName').addEventListener('input', () => setFieldError('fullName', ''));
-  document.getElementById('phone').addEventListener('input', () => setFieldError('phone', ''));
 }
 
 function wirePasswordForm() {
@@ -150,7 +140,7 @@ function wireResetData() {
     const confirmed = confirm(t('confirm.resetData'));
     if (!confirmed) return;
 
-    localStorage.removeItem(STORAGE_KEYS.clients);
+    localStorage.removeItem(clientsStorageKey());
     try {
       await loadClients();
       showToast(t('toast.dataReset'));
