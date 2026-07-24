@@ -113,7 +113,7 @@ body {
 
 /* ---------- Soft floating blobs ---------- */
 
-body::before, body::after {
+body::before, body::after, html::before, html::after {
   content: "";
   position: fixed;
   z-index: -1;
@@ -125,6 +125,8 @@ body::before, body::after {
 }
 body::before { width: 40vw; height: 40vw; top: -10vw; left: -10vw; background: var(--sky); }
 body::after { width: 36vw; height: 36vw; bottom: -12vw; right: -8vw; background: var(--peach); animation-delay: -6s; }
+html::before { width: 26vw; height: 26vw; top: 30vh; right: 6vw; background: var(--rose); animation-delay: -3s; animation-duration: 22s; }
+html::after { width: 22vw; height: 22vw; bottom: 8vh; left: 12vw; background: var(--mint); animation-delay: -10s; animation-duration: 16s; }
 
 @keyframes blob-float {
   0% { transform: translate(0, 0) scale(1); }
